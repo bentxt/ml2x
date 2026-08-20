@@ -1,0 +1,164 @@
+# RESUME PROMPT — ML2X assessment of fs2ml/ocamlsharp
+
+Read this whole file, then continue the assessment work described at the bottom.
+Do NOT start over from scratch — the investigation below is already done.
+
+================================================================
+## 0. ONE-LINE TASK
+================================================================
+
+Inspect the existing `fs2ml`/`ocamlsharp` compiler (it lives in a SEPARATE repo)
+and produce a source-grounded `ASSESSMENT.md` IN THIS repo evaluating whether it
+is a viable foundation for the generalized **ML2X** project
+(ML/OCaml-shaped source -> multiple targets: `ml2java`, `ml2ts`, etc.).
+
+The full brief is in `handoff.md` in this repo. Read it for the required
+ASSESSMENT.md sections and the evidence standard (cite concrete files/types/
+functions; no vague "modular architecture" claims).
+
+================================================================
+## 1. WHERE THINGS ARE
+================================================================
+
+- THIS repo (ml2x, current working dir):
+    /Volumes/t7sams2tb01/ben_boxdir_t7sams2tb01/syncbox_cloud/HomeWork/ml2x/ml2x
+  Contains ONLY: handoff.md (brief), README.md, .gitignore, glm52-claude.sh,
+  and this prompt.txt. NO compiler source lives here.
+  Git: branch `main`, 3 commits, only README.md + handoff.md tracked.
+
+- The ACTUAL compiler source (read-only target of the assessment):
+    /Volumes/t7sams2tb01/ben_boxdir_t7sams2tb01/syncbox_cloud/HomeWork/esca/esca-frontends/frontends/fs2ml
+  It is part of the larger `esca-frontends` monorepo (git root: esca-frontends).
+  ~21 OCaml files, ~3367 LOC under src/. Has its own README.md, handoff-fs2ml.md,
+  open-problems-plan.md, dune-project, Makefile, check.sh, and src/bin/test/demo/doc/site.
+
+DECISION ALREADY MADE: "Read fs2ml in place, write ASSESSMENT.md here."
+  -> Inspect the fs2ml source at its real location (READ-ONLY, do not modify it).
+  -> Write the resulting ASSESSMENT.md into THIS ml2x repo.
+
+================================================================
+## 2. WHAT fs2ml/ocamlsharp ACTUALLY IS (from docs already read)
+================================================================
+
+IMPORTANT NAMING: The project renamed itself. Internally it is now **ocamlsharp**
+(dune `(name ocamlsharp)`, package `ocamlsharp`). Historical names: `fs2ml`,
+`fsharp2ocaml`, `eocaml`, `JavaML`/`javaml`. The handoff.md in THIS repo calls it
+"fs2ml"; the source repo calls it "ocamlsharp". Same thing.
+
+WHAT IT IS (per its README + handoff-fs2ml.md):
+  A source-to-source PREPROCESSOR, NOT an F# compiler:
+    "write OCaml with an F#-shaped syntax -> emit readable OCaml
+     -> let ocamlc/dune typecheck it"
+  OCaml is the semantic authority. Not aiming for F#/.NET compatibility.
+
+PIPELINE (current, per handoff-fs2ml.md "Important Caveat"):
+    JavaML parser / AST  ->  syntax-only backend hook  ->  src/esca_ocaml/emit.ml  ->  OCaml
+  i.e. it STILL REUSES the JavaML parser and AST (vendored from Esca's JavaML
+  frontend). The README confirms: "The src/ frontend (lexer/parser/AST) is
+  vendored from Esca's JavaML frontend and carries no dependency on it."
+  The handoff calls this "not the right long-term ownership" and wants a
+  future "fs2ml parser/AST -> lightweight normalization -> OCaml emitter".
+
+  NOTE: handoff-fs2ml.md describes an OLDER layout (src/esca_ocaml/, tools/,
+  t/esca-ocaml/, make check-esca-ocaml) that is STALE. open-problems-plan.md
+  Phase 1 flags this. The CURRENT layout (per README) is:
+    src/  ocamlsharp library: diagnostic, token, lexer, ast, parser, pipeline, emit
+    bin/  ocamlsharp (forward .fs -> .ml)
+          ocaml2ocamlsharp (reverse .ml -> .fs, OCaml >= 5.2 only)
+    test/ core.fs, core.ml, core.reverse.fs
+    demo/ demo.fs, demo.ml
+  Forward lib/bin are pure stdlib (OCaml 4.14+). Reverse tool reads compiler-libs
+  parsetree (uses Obj to inspect internals; tuple/function payloads need 5.2+;
+  gated by dune enabled_if).
+
+SUPPORTED SUBSET (checked fixture, per README + handoff):
+  one module; records; variants; typed `let rec` functions; local `let ... in`;
+  `match`; `if`; record/constructor values; local calls; tuples; lists;
+  arrays (emitter only); basic operators. Anything outside -> diagnostic.
+
+PARSE SURFACE IS WIDER THAN EMITTED SUBSET (per open-problems-plan.md Phase 2):
+  The parser/AST still ACCEPT JavaML-era constructs that the OCaml emitter REJECTS
+  later, e.g. `new`, object declarations, imports, packages, throws, loops,
+  try/catch, assignment, member calls, indexing. Emitter errors like
+  "OCaml syntax emitter does not support Java-style method calls".
+  -> This is directly relevant to the handoff's OO/Java-DSL questions:
+     there IS existing OO-ish parse machinery, but it's legacy JavaML syntax,
+     not F# object syntax, and it does not map to OCaml objects.
+
+CHECK / VERIFICATION:
+  `sh check.sh` -> core.fs -> core.ml -> ocamlc; and on OCaml >= 5.2 the reverse
+  roundtrip core.ml -> core.reverse.fs -> core.ml -> ocamlc.
+  (When resuming, consider running `sh check.sh` to confirm it still passes,
+   but do NOT modify the fs2ml repo.)
+
+================================================================
+## 3. PROGRESS SO FAR
+================================================================
+
+DONE:
+  - Located the real source (esca-frontends/frontends/fs2ml).
+  - Read: fs2ml/README.md, handoff-fs2ml.md, open-problems-plan.md, dune-project,
+    Makefile (doc site only).
+  - Mapped file tree (find output was about to be captured when session paused).
+  - Established the rename fs2ml -> ocamlsharp, the current vs stale layouts, the
+    "reuses JavaML parser/AST" architecture, and the parse-surface-wider-than-
+    emit-subset finding.
+
+NOT YET DONE (this is the remaining work):
+  1. Read the actual src/*.ml files to map the REAL current pipeline + AST/IR.
+     Start with: ast.ml, parser.ml (and parser if it's a .mly), lexer.ml/.mll,
+     pipeline.ml, emit.ml, plus any dune stanzas in src/ and bin/. Cite concrete
+     types/functions. Key question from handoff section 5: does a TARGET-NEUTRAL
+     IR exist, or is it syntax-only -> OCaml directly?
+  2. Analyze supported language + OCaml coupling (handoff sections 3 & 4).
+     Classify constructs supported/partial/unsupported/custom. Find exactly
+     where OCaml assumptions enter (AST types? direct OCaml syntax construction?
+     OCaml type semantics above the backend?).
+  3. Analyze existing OO handling (handoff section 6) — how class/interface/object
+     constructs are parsed/represented, whether anything maps to OCaml
+     objects/classes, whether it could become a Java-only `.mlj` path. (Hint from
+     docs: the OO-ish surface is legacy JavaML, rejected by the OCaml emitter.)
+  4. Analyze modules/functors/Mirage implications (handoff section 7) — search
+     for module/signature/functor/first-class-module support.
+  5. Write ASSESSMENT.md into THIS repo following handoff.md's required sections:
+       Current project summary / Relevant source tree / Actual compiler pipeline
+       / Internal representations / Supported language matrix / OCaml coupling
+       analysis / Multi-target readiness / Java+OO feasibility / Mirage
+       compatibility / Gap analysis (desired/current/gap/evidence per item) /
+       Minimal next steps (3-5 structural changes only, do NOT implement them).
+     Source-grounded: file paths + symbols + short excerpts only where they
+     materially clarify. Evidence standard from handoff.md.
+
+================================================================
+## 4. HARD CONSTRAINTS (from handoff.md "Important Constraints")
+================================================================
+
+  - Do NOT modify the fs2ml/esca-frontends repo (read-only assessment pass).
+  - Do NOT redesign or rewrite the compiler; do NOT start implementing next steps.
+  - Do NOT assume fs2ml should be preserved unchanged, nor that F# must stay
+    canonical, nor that Java/Scala/Wasm is the enterprise answer.
+  - Prefer small explicit target subsets over runtime emulation.
+  - Preserve real OCaml as the escape hatch (esp. for Mirage-specific code).
+  - Treat ML2X as a hypothesis to evaluate against the existing source.
+  - Central question: is the existing implementation already close to a useful
+    foundation for ML2X, and if not, which parts are reusable?
+
+================================================================
+## 5. HOW TO RESUME
+================================================================
+
+  1. Read handoff.md (this repo) for the full brief + required ASSESSMENT.md
+     structure + evidence standard.
+  2. The source to inspect is at the path in section 1. Read-only.
+  3. Pick up at "NOT YET DONE" step 1: read src/*.ml and map the real pipeline.
+     You may use parallel agents (Explore/general-purpose) to fan out reads of
+     ast.ml, parser, lexer, emit.ml, pipeline.ml, bin/*.ml, and the tests/demo
+     fixtures, then synthesize.
+  4. Write ASSESSMENT.md into THIS repo when the analysis is grounded in source.
+  5. Optionally run `sh check.sh` in the fs2ml dir to confirm current passing
+     state — but never modify it.
+
+Useful starting commands:
+  FS2ML="/Volumes/t7sams2tb01/ben_boxdir_t7sams2tb01/syncbox_cloud/HomeWork/esca/esca-frontends/frontends/fs2ml"
+  find "$FS2ML/src" -type f \( -name "*.ml" -o -name "*.mli" -o -name "*.mll" -o -name "*.mly" \) -exec wc -l {} + | sort -n
+  ls -la "$FS2ML/src" "$FS2ML/bin" "$FS2ML/test" "$FS2ML/demo"

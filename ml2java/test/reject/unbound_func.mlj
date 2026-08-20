@@ -1,0 +1,2 @@
+let main () : unit =
+  print_int (nosuch 1)

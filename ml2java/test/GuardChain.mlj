@@ -1,0 +1,49 @@
+(* Guard-chain regression: 6 fully-guarded arms over an int scrutinee with
+   fall-through to an unguarded final arm.  A guard failure must fall
+   through to the NEXT arm exactly once (the old nested-else emission
+   duplicated the remaining chain per guarded arm, growing 2^(N-1) lines
+   for N guarded arms).  Exercises multiple hit positions: arm 1, arm 3,
+   arm 5, arm 6, plus guard-failure and pattern-miss fall-throughs. *)
+
+let pick (x : int) : int =
+  match x with
+  | 1 when x > 0 -> 10
+  | 2 when x > 100 -> 20
+  | 3 when x > 0 -> 30
+  | 4 when x < 0 -> 40
+  | 5 when x > 0 -> 50
+  | 6 when x > 0 -> 60
+  | _ -> 99
+
+(* var-pattern guards (no pattern conditions): the guard alone decides *)
+let classify (x : int) : string =
+  match x with
+  | n when n < 0 -> "neg"
+  | n when n = 0 -> "zero"
+  | n when n > 10 -> "big"
+  | _ -> "small"
+
+(* a nested match inside a guarded arm body: its break labels must not
+   collide with the outer chain's labels *)
+let deep (x : int) : int =
+  match x with
+  | 1 when x > 0 ->
+      (match x with
+      | 1 -> 100
+      | _ -> 0)
+  | _ -> 0
+
+let main () : unit =
+  print_endline (string_of_int (pick 1));
+  print_endline (string_of_int (pick 2));
+  print_endline (string_of_int (pick 3));
+  print_endline (string_of_int (pick 4));
+  print_endline (string_of_int (pick 5));
+  print_endline (string_of_int (pick 6));
+  print_endline (string_of_int (pick 7));
+  print_endline (classify (-5));
+  print_endline (classify 0);
+  print_endline (classify 5);
+  print_endline (classify 20);
+  print_endline (string_of_int (deep 1));
+  print_endline (string_of_int (deep 2))

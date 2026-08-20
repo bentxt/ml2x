@@ -1,0 +1,486 @@
+ML2JAVA TECHNICAL PROPOSALS
+===========================
+
+Purpose
+-------
+
+This document proposes ways to address the concrete defects recorded in
+assessment_20260820_010349.md. It does not replace SPEC.md and does not assume
+that every proposal must be accepted. Decisions that change the language are
+called out explicitly.
+
+
+1. Main architectural finding
+-----------------------------
+
+Most of the serious defects share one cause: emit_java.ml performs semantic
+lowering while it is also producing Java text.
+
+At present, expr_of sometimes returns a Java expression and sometimes writes
+temporary declarations and statements into a shared output buffer before
+returning a temporary name. That arrangement works for simple expressions,
+but the caller does not know whether evaluating an operand emitted statements.
+It therefore cannot reliably preserve:
+
+- short-circuit evaluation;
+- source evaluation order;
+- repeated evaluation of loop conditions;
+- Java's distinction between expression and statement positions;
+- Java's distinction between class, static, and instance contexts;
+- guaranteed assignment on every control-flow path.
+
+The proposed pipeline is:
+
+    source text
+      -> lexer and parser
+      -> source AST
+      -> semantic checker and resolved types
+      -> typed Java-oriented lowering IR
+      -> Java text emitter
+
+The new lowering stage would decide control flow, temporary variables, Java
+types, static versus instance access, and legal statement placement. The final
+emitter would only print the already-lowered Java structure.
+
+
+2. Shape of the typed lowering IR
+---------------------------------
+
+The IR does not need to model all of Java. It only needs constructs generated
+by ml2java.
+
+Suggested categories:
+
+    Java type
+      primitive: long, double, boolean, char
+      reference: String, named class, generic application, List, tuple
+      void
+
+    Pure Java value
+      literal
+      local or field reference
+      constructor call
+      method call
+      field/accessor call
+      unary or binary operation whose operands are already pure values
+
+    Java statement
+      local declaration
+      assignment
+      expression statement
+      return
+      if/else
+      while
+      enhanced for
+      numeric for
+      block
+      throw
+
+    Java member
+      record, class, interface
+      field
+      method
+      constructor
+      static initializer
+
+Each lowered source expression would produce:
+
+    prerequisite statements + resulting pure value
+
+Conceptually:
+
+    lower_value : context -> typed_expr -> java_statement list * java_value
+    lower_effect : context -> typed_expr -> java_statement list
+    lower_tail : context -> typed_expr -> java_statement list
+
+The implementation does not have to use these exact OCaml types or names. The
+important constraint is that statement production becomes explicit data. It
+must not happen as a hidden side effect of converting an expression to text.
+
+The lowering context should state where code is being generated:
+
+    top-level field initializer
+    static initializer
+    static method
+    instance method
+    constructor
+    local block
+
+It should also carry the source-to-Java binding map and whether instance access
+is permitted.
+
+
+3. Short-circuit operators and evaluation order
+------------------------------------------------
+
+For ordinary arithmetic, both operands can be lowered in the chosen source
+evaluation order and their prerequisite statements concatenated in that order.
+
+`&&` and `||` require special control-flow lowering whenever the right operand
+has prerequisite statements.
+
+For example:
+
+    a && b
+
+can lower to the equivalent of:
+
+    boolean result = false;
+    <statements for a>
+    if (<value of a>) {
+        <statements for b>
+        result = <value of b>;
+    }
+
+The corresponding `||` form initializes the result to true and evaluates the
+right operand only when the left value is false.
+
+This directly fixes the reproduced case where `false && (assignment; true)`
+performed the assignment.
+
+Loop conditions need similar care. Prerequisite statements belonging to a
+`while` condition must execute before every condition test, not once before the
+loop. A general lowering is:
+
+    while (true) {
+        <condition prerequisite statements>
+        if (!<condition value>) break;
+        <body>
+    }
+
+
+4. Match exhaustiveness and fallthrough
+---------------------------------------
+
+Only an unguarded pattern can contribute to the static exhaustiveness proof.
+A guarded arm may fail even when its pattern matches.
+
+The checker can still type-check guarded arms normally, but coverage collection
+should ignore their patterns for the purpose of proving exhaustiveness.
+
+The lowering should also include an explicit impossible-path failure after a
+match chain. It should not rely on a zero-initialized result temporary. Even
+with a checker defect, generated code should fail visibly rather than silently
+returning 0, false, a null reference, or a null object.
+
+Possible generated fallback:
+
+    throw new IllegalStateException("non-exhaustive match");
+
+The checker remains responsible for rejecting non-exhaustive source. The
+fallback is defensive protection against compiler defects.
+
+
+5. Option representation
+------------------------
+
+Nullable erasure cannot represent nested options because these source values
+collapse to the same Java value:
+
+    None
+    Some None
+
+The same problem appears whenever a legal option payload can itself be null.
+
+There are two coherent language choices.
+
+Choice A: preserve all option values
+
+Use an explicit generated representation, for example a small structural
+`_Option<T>` value with a presence flag and payload. `None` and `Some null`
+remain distinct, nested options work, matching remains reliable, and equality
+can stay structural.
+
+This is the complete semantic solution. A small representation can be emitted
+inside each generated compilation unit, so no external runtime library is
+required.
+
+Choice B: retain nullable erasure and restrict the language
+
+Reject nested options and every option payload whose Java representation may
+be null. The restriction must be enforced by the checker and recorded in
+SPEC.md.
+
+This preserves the smallest generated Java but makes option availability depend
+on representation details. The current behavior, which accepts the value and
+silently changes its meaning, is not a coherent third choice.
+
+
+6. Top-level value initialization
+---------------------------------
+
+A Java field initializer can contain an expression but cannot contain local
+declarations, assignments, `if`, loops, or match chains.
+
+The lowering stage can distinguish two cases:
+
+Simple initializer:
+
+    public static final long answer = 2L;
+
+Statement-bearing initializer:
+
+    public static final long answer;
+    static {
+        <lowered statements>
+        answer = <result>;
+    }
+
+Static blocks must be emitted in source declaration order so that the existing
+no-forward-reference rule for top-level values remains meaningful.
+
+An alternative is a generated private initializer method for each value, with
+the field initialized by calling that method. Either form is valid. The IR
+should represent the selected form explicitly instead of allowing expression
+lowering to write statements directly into a class body.
+
+
+7. Static and instance method checking
+--------------------------------------
+
+The checker needs distinct method contexts.
+
+Instance method context contains:
+
+- `self`;
+- constructor-parameter fields;
+- declared instance fields;
+- private instance methods;
+- static methods where class-qualified calls are permitted.
+
+Static method context contains:
+
+- method parameters;
+- top-level functions and values;
+- class-qualified static methods;
+- no `self` and no implicit instance fields.
+
+A bare instance field or `self` reference in a static method should produce a
+source error before Java emission. The emitter should then never be asked to
+print `this` in a static method.
+
+
+8. Interface implementation checks
+-----------------------------------
+
+A method satisfying an inherited class type must be:
+
+- present;
+- public;
+- non-static;
+- arity-compatible;
+- parameter-type compatible;
+- return-type compatible.
+
+The current checker already handles presence and signature shape. Adding the
+visibility and instance checks closes the reproduced `javac` failures.
+
+Duplicate inherited signatures also need one deterministic rule. Compatible
+duplicates may share one implementation. Incompatible duplicates should be a
+checker error rather than being delegated to `javac`.
+
+
+9. Generic function decision
+-----------------------------
+
+The language contract needs to state whether polymorphic functions belong to
+v1. Generic records and variants are already demonstrated, but generic function
+behavior is currently neither properly emitted nor explicitly rejected.
+
+Choice A: generic functions are outside v1
+
+Reject free type variables in function and method annotations with a located
+diagnostic. This is the smaller change and prevents accepted programs from
+producing `Object`-typed Java accidentally.
+
+Choice B: implement generic Java methods
+
+For a signature such as:
+
+    'a -> 'a
+
+collect the quantified type variables once, preserve one substitution map for
+the complete parameter-and-return signature, and emit:
+
+    public static <T> T id(T x)
+
+At every call site, instantiate the complete signature with one fresh mapping.
+Do not instantiate each parameter and the return type independently.
+
+Whichever choice is selected should also validate that every type variable in
+a record or variant field is declared by that type declaration. An undeclared
+type variable should not silently become Java `Object`.
+
+
+10. Output filename and Java class name
+---------------------------------------
+
+SPEC.md currently derives the public Java class name from the input basename.
+Given that contract, `-o` can safely control only the destination directory or
+must require the destination basename to equal the generated class name.
+
+For example, `Core.mlj -o Renamed.java` should fail immediately with a clear
+message explaining that the required output basename is `Core.java`.
+
+The other possible contract is to derive the class name from `-o`. That changes
+the meaning documented in SPEC.md. The compiler should not permit the filename
+and public class name to disagree.
+
+
+11. Source positions on declarations
+------------------------------------
+
+Every declaration and member should retain at least its starting source
+position:
+
+    type declaration
+    function or top-level value
+    record field
+    variant constructor
+    class and class type
+    class field
+    method and method signature
+
+The checker can then replace `pos0` with the relevant declaration or member
+position. Errors such as duplicate declarations, invalid interface
+implementations, unknown annotation types, and return mismatches would point to
+real source locations rather than `0:0`.
+
+A general located wrapper could reduce AST field repetition, but explicit
+position fields are also adequate.
+
+
+12. Java name validation
+------------------------
+
+Every accepted source name eventually used as a Java identifier should be
+checked or escaped consistently. This includes:
+
+- the input basename used as the public class name;
+- functions and top-level values;
+- types and constructors;
+- fields and methods;
+- parameters and local bindings.
+
+The checker should detect Java reserved words, invalid identifier characters,
+duplicate generated names, and collisions between declarations that occupy the
+same Java namespace. Generated temporary names should use a namespace that
+cannot collide with accepted source identifiers.
+
+
+13. Test-suite changes
+----------------------
+
+Each reproduced defect should become a permanent regression test.
+
+Semantic output tests:
+
+- nested option distinguishes `None` from `Some None`, if nested options remain
+  supported;
+- guarded-only arms do not prove exhaustiveness;
+- `false && rhs` does not execute `rhs`;
+- `true || rhs` does not execute `rhs`;
+- statement-bearing `while` conditions execute on every iteration;
+- source evaluation order is preserved wherever the language defines it.
+
+Accepted-program Java tests:
+
+- statement-bearing top-level initializer;
+- static method attempting instance access;
+- private method attempting to implement an interface;
+- static method attempting to implement an interface;
+- generic function, or a rejection test if generic functions are outside v1;
+- Java keyword and generated-name collision cases;
+- arbitrary `-o` basename handling.
+
+Test-driver checks:
+
+- require `java` to exit with status 0 before comparing output;
+- use fixed-string diagnostic matching instead of regular-expression matching
+  when the `.err` files contain literal expected text;
+- confirm that a rejected compilation does not create or replace output;
+- compile generated Java with useful lint warnings enabled where warnings are
+  expected to be clean;
+- preserve generated Java and diagnostics when a test fails, or print the
+  temporary directory before cleanup.
+
+A useful suite-wide invariant is:
+
+    Every source accepted by ml2java must also be accepted by javac.
+
+The existing positive-fixture loop already checks this for its small corpus.
+More focused interaction tests make the invariant meaningful across boundary
+cases.
+
+
+14. Possible implementation sequence
+------------------------------------
+
+This is a dependency description, not a decision already made.
+
+Stage 1: prevent known silent miscompilations
+
+- stop guarded arms from proving exhaustiveness;
+- add an explicit failed-match fallback;
+- preserve short-circuit evaluation;
+- reject unsupported nested options or adopt an explicit option representation;
+- reject instance access from static methods;
+- reject private/static interface implementations;
+- reject generic functions until their contract is decided;
+- add one regression test per defect.
+
+Stage 2: introduce the typed lowering IR
+
+- define Java types, pure values, statements, blocks, members, and contexts;
+- lower checked expressions into explicit statements and values;
+- make emit_java.ml a printer over the lowered representation;
+- move top-level initialization and loop-condition handling into lowering;
+- retain the current readable Java layout as a formatting target.
+
+Stage 3: complete language-contract choices
+
+- decide explicit option representation versus nullable restrictions;
+- decide rejection versus implementation of generic functions;
+- define evaluation order where SPEC.md is currently silent;
+- define `-o` and public-class naming behavior;
+- record the decisions in SPEC.md.
+
+Stage 4: strengthen boundary validation
+
+- attach declaration positions;
+- validate Java identifiers and namespace collisions;
+- strengthen the test driver;
+- add focused interaction tests and generated-Java checks.
+
+
+15. Completion criteria
+-----------------------
+
+The reported problems are resolved when all of the following are true:
+
+- `None` and `Some None` are either represented distinctly or the latter is
+  rejected by the documented language contract;
+- guarded arms cannot create a false exhaustiveness proof;
+- `&&` and `||` preserve conditional evaluation for every accepted operand;
+- loops reevaluate their accepted condition expressions correctly;
+- no accepted top-level initializer places statements illegally in a class;
+- static methods cannot generate instance access;
+- every accepted interface implementation is legal Java;
+- generic functions either preserve shared type variables and emit valid Java
+  or receive a clear source-level rejection;
+- an accepted `-o` path agrees with the public Java class name;
+- declaration diagnostics refer to real source positions;
+- every positive regression fixture passes ml2java, javac, Java execution, exit
+  status checking, and expected-output comparison;
+- every rejection fixture fails at the intended compiler phase with the
+  intended diagnostic.
+
+
+Conclusion
+----------
+
+The individual defects are repairable in the current code. The typed lowering
+stage addresses the shared design problem that allowed several of them: hidden
+statement emission during expression rendering. It would make legality and
+evaluation order explicit before Java text generation and would give the final
+emitter a smaller, more reliable responsibility.

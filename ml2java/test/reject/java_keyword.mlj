@@ -1,0 +1,4 @@
+(* `final` is fine in OCaml syntax but illegal as a Java field name *)
+let final = 42
+
+let main () : unit = print_int final

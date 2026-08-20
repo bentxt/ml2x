@@ -1,0 +1,3 @@
+(* the file basename becomes the top-level Java class name, and `final`
+   is a Java keyword: no usable Java file could come out of this *)
+let main () : unit = print_endline "ok"

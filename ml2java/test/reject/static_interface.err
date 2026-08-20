@@ -1,0 +1,1 @@
+is static and cannot implement method 'print' of interface 'printable'

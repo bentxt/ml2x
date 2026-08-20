@@ -1,0 +1,15 @@
+(* A class method that mentions a type variable is a generic Java method
+   <T> T g(T x); it cannot implement the monomorphic interface method
+   long g(long x), so the structural signature comparison rejects it. *)
+class type itf =
+  object
+    method g (x : int) : int
+  end
+
+class c =
+  object (self)
+    inherit itf
+    method g (x : 'a) : 'a = x
+  end
+
+let main () : unit = ()

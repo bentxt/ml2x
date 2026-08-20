@@ -1,0 +1,34 @@
+let rec sum (xs : int list) : int =
+  match xs with
+  | [] -> 0
+  | x :: rest -> x + sum rest
+
+let rec evens (xs : int list) : int list =
+  match xs with
+  | [] -> []
+  | x :: rest -> if x % 2 = 0 then x :: evens rest else evens rest
+
+let rec take (n : int) (xs : int list) : int list option =
+  if n = 0 then Some []
+  else
+    match xs with
+    | [] -> None
+    | x :: rest -> (
+        match take (n - 1) rest with
+        | Some tail -> Some (x :: tail)
+        | None -> None)
+
+let head2 (xs : int list) : string =
+  match xs with
+  | x :: y :: _ -> string_of_int (x + y)
+  | _ -> "too short"
+
+let main () : unit =
+  let xs = [1; 2; 3; 4; 5; 6] in
+  print_endline (string_of_int (sum xs));
+  print_endline (string_of_int (sum (evens xs)));
+  (match take 3 xs with
+   | Some short -> print_endline (head2 short)
+   | None -> print_endline "failed");
+  print_endline (head2 [9; 1]);
+  print_endline (head2 [5])

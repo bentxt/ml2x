@@ -1,0 +1,8 @@
+(* a guarded arm never proves coverage: this match has no unguarded
+   `true` arm, so it is not exhaustive *)
+let pick (b : bool) : int =
+  match b with
+  | true when false -> 7
+  | false -> 9
+
+let main () : unit = print_int (pick true)

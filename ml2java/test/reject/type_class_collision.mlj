@@ -1,0 +1,9 @@
+(* types, classes, and class types share one nested-type namespace in the
+   generated Java file *)
+type thing = { a : int }
+
+class thing () =
+  object
+  end
+
+let main () : unit = print_endline "ok"

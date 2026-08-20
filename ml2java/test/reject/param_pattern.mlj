@@ -1,0 +1,2 @@
+let describe ((a, b) : int * int) : int = a + b
+let main () : unit = ()

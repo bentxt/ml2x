@@ -1,0 +1,6 @@
+class counter =
+  object (self)
+    val mutable n = 0
+    method static peek () : int =
+      self # n
+  end

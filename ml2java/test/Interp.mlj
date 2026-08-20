@@ -1,0 +1,71 @@
+(* End-to-end: a tiny expression interpreter.  Exercises variants with
+   recursive payloads, tuples, options, list recursion, pattern matching
+   with nested patterns, and a class used as state, all in one program. *)
+
+type expr =
+  | Int of int
+  | Str of string
+  | Var of string
+  | Add of expr * expr
+  | Mul of expr * expr
+  | Let of string * expr * expr
+
+type value = Num of int | Txt of string
+
+let rec lookup (name : string) (env : (string * value) list) : value option =
+  match env with
+  | [] -> None
+  | (n, v) :: rest -> if n = name then Some v else lookup name rest
+
+let rec eval (e : expr) (env : (string * value) list) : value option =
+  match e with
+  | Int n -> Some (Num n)
+  | Str s -> Some (Txt s)
+  | Var x -> lookup x env
+  | Add (a, b) -> (
+      match (eval a env, eval b env) with
+      | (Some (Num x), Some (Num y)) -> Some (Num (x + y))
+      | _ -> None)
+  | Mul (a, b) -> (
+      match (eval a env, eval b env) with
+      | (Some (Num x), Some (Num y)) -> Some (Num (x * y))
+      | _ -> None)
+  | Let (x, v, body) -> (
+      match eval v env with
+      | Some val_ -> eval body ((x, val_) :: env)
+      | None -> None)
+
+let show_value (v : value) : string =
+  match v with
+  | Num n -> "num:" ^ string_of_int n
+  | Txt s -> "txt:" ^ s
+
+class counter =
+  object (self)
+    val mutable n = 0
+    method incr () : unit = n <- n + 1
+    method get () : int = n
+  end
+
+let prog = Let ("x", Int 5, Add (Var "x", Mul (Int 3, Var "x")))
+let bad = Add (Var "missing", Int 1)
+let sid = Str "hello"
+
+let main () : unit =
+  let c = new counter in
+  (match eval prog [] with
+   | Some v ->
+       c # incr ();
+       print_endline (show_value v)
+   | None -> print_endline "failed");
+  (match eval bad [] with
+   | Some v ->
+       c # incr ();
+       print_endline (show_value v)
+   | None -> print_endline "failed");
+  (match eval sid [] with
+   | Some v ->
+       c # incr ();
+       print_endline (show_value v)
+   | None -> print_endline "failed");
+  print_endline (string_of_int (c # get ()))

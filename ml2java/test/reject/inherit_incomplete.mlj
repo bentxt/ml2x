@@ -1,0 +1,11 @@
+class type itf =
+  object
+    method m1 () : int
+    method m2 () : int
+  end
+class c (x : int) =
+  object (self)
+    inherit itf
+    method m1 () : int = x
+  end
+let main () : unit = ()

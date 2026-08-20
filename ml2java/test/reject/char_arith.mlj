@@ -1,0 +1,2 @@
+let bad (c : char) : char = c + 'a'
+let main () : unit = ()

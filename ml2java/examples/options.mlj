@@ -1,0 +1,20 @@
+type user = { name : string; age : int }
+
+let youngest (a : user option) (b : user option) : user option =
+  match (a, b) with
+  | (Some x, Some y) -> if x.age <= y.age then a else b
+  | (Some _, None) -> a
+  | (None, Some _) -> b
+  | (None, None) -> None
+
+let show (u : user option) : string =
+  match u with
+  | Some x -> x.name ^ " (" ^ string_of_int x.age ^ ")"
+  | None -> "nobody"
+
+let main () : unit =
+  let a = Some { name = "ada"; age = 36 } in
+  let b = Some { name = "ben"; age = 28 } in
+  print_endline (show (youngest a b));
+  print_endline (show (youngest None b));
+  print_endline (show (youngest None None))

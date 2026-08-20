@@ -1,0 +1,4 @@
+let f (o : int option) : int =
+  match o with
+  | Some x -> x
+let main () : unit = ()

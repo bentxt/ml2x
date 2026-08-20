@@ -1,0 +1,12 @@
+(* a static method cannot implement an interface method in Java *)
+class type printable = object
+  method print () : string
+end
+
+class doc () =
+  object
+    inherit printable
+    method static print () : string = "hi"
+  end
+
+let main () : unit = print_endline "ok"

@@ -1,0 +1,23 @@
+(* Regression guard: generic signature pollution (fuzz lane A seed 0).
+   Two generic functions defined back-to-back; the SECOND's body makes a
+   CONCRETE call to the FIRST while its own 'a stays generic.  Stored
+   signatures must stay reified to the source type variables — never
+   aliased to the mutable unifier environment, which a later declaration
+   can rebind.  main then instantiates the FIRST at two different types. *)
+let swap (x : 'a) (y : 'b) : 'b * 'a = (y, x)
+
+let wrap (x : 'a) : 'a list =
+  let (s, n) = swap "hi" 7 in
+  [ x ]
+
+let rep (x : 'a) : 'a * 'a = (x, x)
+
+let main () : unit =
+  let (a, b) = swap "one" 9 in
+  print_endline (string_of_int a);
+  print_endline b;
+  print_endline (string_of_int (List.length (wrap 5)));
+  print_endline (string_of_int (List.length (wrap "w")));
+  let (p, q) = rep true in
+  print_endline (string_of_bool p);
+  print_endline (string_of_bool q)

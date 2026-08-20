@@ -1,0 +1,7 @@
+(* a guarded arm must not count as coverage: the guard can fail at runtime,
+   and an unguarded `true` arm is missing *)
+let f (b : bool) : int =
+  match b with
+  | true when false -> 7
+  | false -> 9
+let main () : unit = ()

@@ -1,0 +1,2 @@
+module M = struct end
+let main () : unit = ()

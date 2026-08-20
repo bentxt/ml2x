@@ -1,0 +1,5 @@
+let main () : unit =
+  let p = Some 1 in
+  match p with
+  | Some x when x -> print_int x
+  | None -> ()

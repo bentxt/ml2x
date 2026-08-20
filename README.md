@@ -62,18 +62,24 @@ Real OCaml remains the escape hatch when a feature does not translate cleanly.
 
 ## Current status
 
-This repository is at the assessment stage. It does not yet contain an ML2X
-compiler implementation.
+The assessment of the existing FS2ML/ocamlsharp compiler is complete; see
+[`ASSESSMENT.md`](ASSESSMENT.md).
 
-The immediate work is to examine the existing FS2ML compiler and determine:
+A first ML2X backend now exists: [`ml2java/`](ml2java/) is a working v1
+compiler (parser, semantic checker, Java emitter) from OCaml-shaped `.mlj`
+source to Java. [`ml2java/README.md`](ml2java/README.md) documents usage and
+the generated Java; [`ml2java/SPEC.md`](ml2java/SPEC.md) is the language
+contract. `sh ml2java/check.sh` builds it, compiles the fixtures, runs them
+under `javac`/`java`, and checks expected stdout, stderr, exit status, and
+rejection diagnostics. The dependability findings from the 2026-08-20
+morning assessment were all reproduced and verified fixed the same day;
+see [`assessment_20260820_175225.md`](assessment_20260820_175225.md). The
+suite's deterministic fuzz lanes (`FUZZ_N`, default 60 in `check.sh`) gate
+every generated program through `javac -Xlint:all -Werror`, execution with
+clean exit and stderr, and a byte-identical recompile.
 
-- which parser, AST, semantic, transformation, and generator components exist;
-- which parts are F#-specific, OCaml-specific, or target-independent;
-- whether its internal representation can support multiple backends;
-- whether its object-oriented syntax can support an idiomatic Java target;
-- which pieces are reusable without redesigning the compiler prematurely.
-
-The full assessment brief is in [`handoff.md`](handoff.md).
+The full brief for the (completed) FS2ML review is in
+[`handoff.md`](handoff.md).
 
 ## Project principles
 

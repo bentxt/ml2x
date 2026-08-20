@@ -1,0 +1,33 @@
+class counter =
+  object (self)
+    val mutable n = 0
+    method incr () : unit = n <- n + 1
+    method add (k : int) : unit = n <- n + k
+    method value () : int = n
+    method static make () : counter = new counter
+  end
+
+class type resettable =
+  object method reset () : unit end
+
+class timed_counter (limit : int) =
+  object (self)
+    inherit resettable
+    val mutable n = limit
+    method reset () : unit = n <- limit
+    method tick () : int =
+      (if n > 0 then n <- n - 1 else ());
+      n
+  end
+
+let main () : unit =
+  let c = counter.make () in
+  c # incr ();
+  c # add 10;
+  print_endline (string_of_int (c # value ()));
+  let t = new timed_counter 2 in
+  print_endline (string_of_int (t # tick ()));
+  print_endline (string_of_int (t # tick ()));
+  print_endline (string_of_int (t # tick ()));
+  t # reset ();
+  print_endline (string_of_int (t # tick ()))

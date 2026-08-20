@@ -1,0 +1,4 @@
+let f (b : bool) : int =
+  match b with
+  | true -> 1
+let main () : unit = ()

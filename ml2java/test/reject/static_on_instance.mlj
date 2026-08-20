@@ -1,0 +1,7 @@
+class c (x : int) =
+  object (self)
+    method static s () : int = 5
+  end
+let main () : unit =
+  let g = new c 1 in
+  print_int (g # s ())

@@ -1,0 +1,9 @@
+class greeter (prefix : string) =
+  object (self)
+    method greet (name : string) : string = prefix ^ name
+  end
+class child (x : int) =
+  object (self)
+    inherit greeter
+  end
+let main () : unit = ()

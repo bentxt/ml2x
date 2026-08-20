@@ -1,0 +1,31 @@
+(* A constructor with a unit `()` parameter: the ctor declaration drops the
+   unit param from the Java signature, so `new` must drop the corresponding
+   `()` argument too (a mid-parameter unit ctor arg, a trailing one, and a
+   class whose ONLY ctor param is unit).  A side-effecting unit argument's
+   statements must still run at its source position, before the later
+   arguments evaluate. *)
+
+type cnt = { mutable n : int }
+
+let poke (c : cnt) (k : int) : unit = c.n <- c.n * 10 + k
+
+class two (a : int) () (b : int) =
+  object (self)
+    method sum () : int = a + b
+  end
+
+class tag () =
+  object (self)
+    method name () : string = "tag"
+  end
+
+let main () : unit =
+  let c = { n = 0 } in
+  let t = new two 1 (poke c 2) 3 in
+  print_endline (string_of_int (t # sum ()));
+  print_endline (string_of_int c.n);
+  let t2 = new two (begin poke c 3; 10 end) () (begin poke c 4; 20 end) in
+  print_endline (string_of_int (t2 # sum ()));
+  print_endline (string_of_int c.n);
+  let g = new tag () in
+  print_endline (g # name ())

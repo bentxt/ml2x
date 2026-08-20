@@ -1,0 +1,2 @@
+let bad (x : int) (y : float) : float = x + y
+let main () : unit = ()

@@ -1,0 +1,56 @@
+(* Literal and representation edge cases: the 63-bit int boundary, unary
+   minus, float printing, char ordering, every supported string escape, and
+   non-ASCII bytes round-tripping through stdout as UTF-8.  Also carries the
+   unit-materialization regression. *)
+
+let main () : unit =
+  (* 63-bit int boundary: max_int is 4611686018427387903 *)
+  print_int 4611686018427387903;
+  print_endline "";
+  print_int (4611686018427387903 - 1);
+  print_endline "";
+  print_int (4611686018427387903 / 2);
+  print_endline "";
+  print_int (4611686018427387903 % 1000);
+  print_endline "";
+  (* negative literals and unary minus *)
+  print_int (-4611686018427387903);
+  print_endline "";
+  print_int (-(4611686018427387903 - 1));
+  print_endline "";
+  print_int (1 - 2);
+  print_endline "";
+  print_int (-0);
+  print_endline "";
+  print_int (0 - 1);
+  print_endline "";
+  (* float printed forms *)
+  print_float 0.5;
+  print_endline "";
+  print_float 1.0;
+  print_endline "";
+  print_float 3.14159;
+  print_endline "";
+  print_float (-2.5);
+  print_endline "";
+  print_float (-0.0);
+  print_endline "";
+  print_float (1.0 /. 3.0);
+  print_endline "";
+  (* char comparisons *)
+  print_endline (string_of_bool ('a' < 'b'));
+  print_endline (string_of_bool ('z' > 'a'));
+  print_endline (string_of_bool ('a' = 'a'));
+  print_endline (string_of_bool ('A' < 'a'));
+  (* string escapes: tab, quote, backslash, newline, carriage return *)
+  print_endline "a\tb";
+  print_endline "say \"hi\"";
+  print_endline "back\\slash";
+  print_endline "line1\nline2";
+  print_endline "cr\rcr";
+  print_endline "quote'inside";
+  (* non-ASCII bytes round-trip as UTF-8 *)
+  print_endline "café";
+  (* unit-materialization regression: this unit expression must print *)
+  let _ = ((if false then failwith "lit" else ()) : unit) in
+  print_endline "lit survived"

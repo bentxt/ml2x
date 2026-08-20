@@ -1,0 +1,7 @@
+(* a record named `point` and a constructor named `Point` become two
+   classes in one file; on a case-insensitive filesystem they overwrite
+   each other's .class output *)
+type point = { x : int }
+type shape = Point of int
+
+let main () : unit = ()

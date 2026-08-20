@@ -1,0 +1,4 @@
+(* the emitter owns `_`-prefixed names (its helpers and temporaries) *)
+let _helper = 42
+
+let main () : unit = print_int _helper

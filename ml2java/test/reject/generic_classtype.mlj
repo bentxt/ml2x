@@ -1,0 +1,7 @@
+(* A class type declares no type parameters of its own, so a type variable
+   in a method signature is free; v1 requires class type signatures to be
+   monomorphic. *)
+class type itf =
+  object
+    method g (x : 'a) : 'a
+  end

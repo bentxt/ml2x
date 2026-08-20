@@ -1,0 +1,3 @@
+(executable
+ (name ml2java)
+ (libraries ml2java_lib))

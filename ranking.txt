@@ -1,0 +1,25 @@
+## Synthetic
+
+1. `hf:Qwen/Qwen3.6-27B` — daily main agent and subagents.
+2. `hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4` — promising fast alternative with 12B active parameters.
+3. `hf:moonshotai/Kimi-K3` — strongest option for difficult tasks, but currently beta and less reliable.
+4. `hf:zai-org/GLM-4.7-Flash` — simple, latency-sensitive work.
+5. `hf:zai-org/GLM-5.2` — capable, but slow and unreliable in current Synthetic tests.
+6. `hf:openai/gpt-oss-120b` — older model with a 128k context limit.
+
+## Ollama cloud
+
+1. `deepseek-v4-flash:0731-cloud` — best daily balance; responsive and already working well in Claude Code.
+2. `kimi-k3:cloud` — strongest option for difficult coding and vision tasks, but expensive and potentially slower.
+3. `deepseek-v4-pro:cloud` — excellent reasoning and coding, but substantially heavier than Flash.
+4. `minimax-m3:cloud` — strong long-running agent with 512K Ollama context and native vision.
+5. `glm-5.2:cloud` — strong coding and 976K context; marked high usage.
+6. `kimi-k2.7-code:cloud` — focused coding model with efficient thinking and strong tool use.
+7. `glm-5.1:cloud` — capable, but superseded by GLM-5.2.
+8. `minimax-m2.7:cloud` — good software engineering and professional-tool work.
+9. `nemotron-3-ultra:cloud` — capable agent model whose coding-agent results trail the leaders.
+10. `qwen3.5:cloud` — solid medium-usage general-purpose option.
+11. `gemma4:31b-cloud` — useful multimodal model, but less proven for long Claude Code loops.
+12. `nemotron-3-super:cloud` — efficient and responsive, but weaker on repository-level coding.
+13. `kimi-k2.6:cloud` — capable, but superseded by Kimi K2.7 Code and Kimi K3.
+14. `nemotron-3-nano:cloud` — speed-oriented and unsuitable as the main model for difficult repository work.

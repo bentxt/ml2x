@@ -1,0 +1,8 @@
+(* ctor parameters and val fields share one Java field namespace *)
+class thing () =
+  object
+    val x = 1
+    val x = 2
+  end
+
+let main () : unit = print_endline "ok"

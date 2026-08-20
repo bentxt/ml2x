@@ -1,0 +1,10 @@
+(* a private method cannot implement an interface method in Java *)
+class type printable = object
+  method to_string () : string
+end
+class p () =
+  object
+    inherit printable
+    method private to_string () : string = "x"
+  end
+let main () : unit = print_endline "ok"
