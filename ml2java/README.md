@@ -6,7 +6,9 @@ that have a direct, predictable Java representation are accepted; everything
 else is rejected with a single-line error.
 
 The language contract is [`SPEC.md`](SPEC.md). If the README and SPEC
-disagree, SPEC and `src/ast.ml` win.
+disagree, SPEC and `src/ast.ml` win. New to the language? Start with
+[`TUTORIAL.md`](TUTORIAL.md) — it walks through every feature with the
+runnable `examples/` files.
 
 ## Build and run
 
@@ -175,7 +177,7 @@ FUZZ_N=0 sh fuzz.sh        # skip
    generated program must compile, pass `javac -Xlint:all -Werror`, run
    with exit 0 and empty stderr, and recompile byte-identically; every
    garbage/mutation sample must be rejected with a located error line (or
-   pass the same gate).  `FUZZ_N` seeds per lane (default 30), 0 skips.
+   pass the same gate).  `FUZZ_N` seeds per lane (default 60), 0 skips.
 
 Current tests cover the full v1 surface: records, variants, generics,
 matches with guards, tuples (including Tuple3, nested tuple patterns,
@@ -188,7 +190,7 @@ elements, cons, `^`, unit-typed call arguments), literal edges (63-bit
 max int, unary minus, floats, char ordering, string escapes, UTF-8),
 statement-bearing top-level values, mutable locals, builtins
 (`print_*`, `string_of_*`, `failwith`, `fst`/`snd`, `List.length`),
-plus 60 rejection fixtures (including `main` shape, int overflow,
+plus 63 rejection fixtures (including `main` shape, int overflow,
 nesting limits, non-unit sequence operands, unit inside inferred
 composite types, class members shadowing top-level names, incompatible
 inherited signatures, generic class types, structural signature
@@ -207,10 +209,10 @@ methods), and `NewUnit` (class constructors with `()` parameters and
 unit-typed call arguments), `GuardChain` (guarded matches compile to
 linear-size labeled blocks), `MixedRec` (field reads on records that
 mix mutable and immutable fields), and `GenPoll` (back-to-back generic
-functions keep independent type variables).  Eight examples under
-`examples/` are compiled and run the
-same way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
-`operators`, and `tuples`.
+functions keep independent type variables).  Twelve examples under `examples/` are compiled and run the same
+way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
+`operators`, `tuples`, `generics`, `tree`, `formatting`, and
+`fizzbuzz`.
 
 ## Layout
 
