@@ -2,7 +2,7 @@
    class with public fields, so field READS of the immutable fields too are
    direct field access; a pure record stays a Java record with accessor
    calls.  Equality between mixed records goes through the generated
-   equals. *)
+   equals.  Also covers record patterns in `match` on both record kinds. *)
 
 type flow = { m_imm_int : int; m_imm_str : string; mutable m_mut : int }
 
@@ -16,6 +16,16 @@ let read_mixed (r : flow) : int = r.m_imm_int + r.m_mut
 let bump (r : flow) : unit = r.m_mut <- r.m_mut + 1
 
 let mk_pure (n : int) (s : string) : pure = { p_imm_int = n; p_imm_str = s }
+
+(* record patterns: pure record reads through accessors, mixed record
+   through direct fields; both must bind the same values *)
+let pat_pure (p : pure) : int =
+  match p with
+  | { p_imm_int = n; p_imm_str = _ } -> n
+
+let pat_mixed (r : flow) : int =
+  match r with
+  | { m_imm_int = n; m_imm_str = _; m_mut = m } -> n + m
 
 let main () : unit =
   let r = mk_mixed 1 "one" 10 in
@@ -36,4 +46,7 @@ let main () : unit =
   print_endline (string_of_int p.p_imm_int);
   print_endline p.p_imm_str;
   let p2 = mk_pure 7 "seven" in
-  print_endline (string_of_bool (p = p2))
+  print_endline (string_of_bool (p = p2));
+  (* record patterns on both record kinds *)
+  print_endline (string_of_int (pat_pure p));
+  print_endline (string_of_int (pat_mixed r))

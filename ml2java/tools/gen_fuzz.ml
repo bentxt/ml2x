@@ -14,6 +14,8 @@
      - records                 literal, shuffled field order, mutable
                                 field assignment, record equality
      - variants                `type shape = ...`, all-constructor matches
+     - records                 literals (shuffled field order), field
+                                access, mutation, record patterns in match
      - options incl. nested    `Some (Some n)` / `Some None` / `None`
      - lists                   literals, `[]`, cons recursion, for-in
      - tuples                  literals, let-tuple, tuple equality
@@ -72,6 +74,7 @@ let gen_program seed =
          r0.fld_a < 100)) in";
         "  print_endline (string_of_int (sum u0));";
         "  print_endline (string_of_int (List.length u0));";
+        "  print_endline (string_of_int (rec_pat r0));";
         "  print_endline (string_of_bool sc);";
         "  print_endline (recolor (Some " ^ ri () ^ "));";
         "  print_endline (recolor None);";
@@ -192,6 +195,9 @@ let gen_program seed =
         "  | Circle r -> r * r * 3.0";
         "  | Rect (w, h) -> w * h";
         "  | Dot -> 0.0";
+        "let rec_pat (b : box) : int =";
+        "  match b with";
+        "  | { fld_a = a; fld_b = _; fld_c = c } -> a + c";
       ]
   in
   String.concat "\n\n" [ head; helpers; main ]

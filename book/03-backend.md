@@ -104,7 +104,7 @@ Raised with a clean one-line error, never silently mishandled:
 
 partial application and functions as values, modules and functors,
 exceptions, references, arrays, mixed `int`/`float` arithmetic, char
-arithmetic, record patterns, two-or-more type parameters on
+arithmetic, two-or-more type parameters on
 variants, named variant payload fields, type aliases, real class
 inheritance (`inherit` takes class types only), `open`, `mod` (use `%`),
 named `unit` parameters (write `()` instead), `unit` inside

@@ -71,7 +71,8 @@ partial application is a checker error in v1.
 
 `_`, `x`, literals, `None`, `Some p`, `Circle p`, `Node (l, v, r)` (tuple
 arg flattens to component patterns: Node of a*b*c then `Node (l,v,r)` gives
-three binders), `(p1, p2)`, `[]`, `x :: xs`. No record patterns in v1.
+three binders), `(p1, p2)`, `[]`, `x :: xs`, `{ a = p1; b = p2 }` (record
+pattern: must name exactly the record's fields, like a record literal).
 
 ## Types
 
@@ -127,7 +128,7 @@ List.length    xs       -> xs.size()
 partial application, functions as values / `fun x -> e`, modules, functors,
 exceptions (`raise`, `try`), arrays, float-less `+.`-free mixes requiring
 promotion (int+float is an error, not auto-coerce, except literals? no: error),
-char arithmetic, record patterns, two-or-more type params on
+char arithmetic, two-or-more type params on
 variants (records allow any), named variant payload fields, type aliases,
 class inheritance (`inherit` only takes class type names = interfaces),
 `open`, references (`ref`, `:=`, `!`), a named parameter of type `unit`

@@ -557,6 +557,52 @@ let rec check_pat st ~at (p : pattern) (scrut : typ) : env * cover =
           [] ps us
       in
       (binds, cover_all)
+  | PRecord fs ->
+      (* a record pattern must name exactly the record's fields, like a
+         record literal (OCaml rule) *)
+      let names = List.sort compare (List.map fst fs) in
+      let cands =
+        Hashtbl.fold
+          (fun _ td acc ->
+            match td with
+            | TDRecord r ->
+                let rn =
+                  List.sort compare
+                    (List.map (fun (n, _, _) -> n) r.rfields)
+                in
+                if rn = names then r :: acc else acc
+            | _ -> acc)
+          st.tdecls []
+      in
+      (match cands with
+      | [] ->
+          errp st at
+            (Printf.sprintf "no record type has exactly the fields {%s}"
+               (String.concat ", " names))
+      | _ :: _ :: _ ->
+          errp st at
+            (Printf.sprintf
+               "ambiguous record pattern {%s}: more than one record type matches"
+               (String.concat ", " names))
+      | [ r ] ->
+          let args = List.map (fun _ -> fresh st) r.rtparams in
+          let env' = List.combine r.rtparams (List.map (resolve st) args) in
+          unify_at_pos st at (TCon (r.rname, List.map (resolve st) args))
+            scrut;
+          let binds =
+            List.fold_left
+              (fun acc (n, child) ->
+                match List.find_opt (fun (fn, _, _) -> fn = n) r.rfields with
+                | None ->
+                    errp st at
+                      (Printf.sprintf "record type '%s' has no field '%s'"
+                         r.rname n)
+                | Some (_, ft, _) ->
+                    let b, _ = check_pat st ~at child (subst_params env' ft) in
+                    acc @ b)
+              [] fs
+          in
+          (binds, cover_all))
   | PNil ->
       unify_at_pos st at (TList (fresh st)) scrut;
       ([], cover_nil)

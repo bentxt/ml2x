@@ -167,7 +167,7 @@ let parse_program ~file src =
     match peek () with
     | Lexer.TIdent _ | Lexer.TUnderscore | Lexer.TInt _ | Lexer.TStr _
     | Lexer.TBool _ | Lexer.TChar _ | Lexer.TUctor _ | Lexer.TLParen
-    | Lexer.TLBracket ->
+    | Lexer.TLBracket | Lexer.TLBrace ->
         true
     | _ -> false
 
@@ -200,6 +200,29 @@ let parse_program ~file src =
           else []
         in
         Ast.PCtor (c, args)
+    | Lexer.TLBrace ->
+        advance ();
+        if peek () = Lexer.TRBrace then
+          error "empty record pattern"
+        else begin
+          let fields = ref [] in
+          let rec go () =
+            let fname = expect_ident "expected a record field name" in
+            expect_tok Lexer.TEq "expected `=` after record field name";
+            let p = parse_pattern () in
+            fields := (fname, p) :: !fields;
+            match peek () with
+            | Lexer.TSemi ->
+                advance ();
+                if peek () = Lexer.TRBrace then ()
+                else go ()
+            | Lexer.TRBrace -> ()
+            | _ -> error "expected `;` or `}` in record pattern"
+          in
+          go ();
+          expect_tok Lexer.TRBrace "expected `}` after record fields";
+          Ast.PRecord (List.rev !fields)
+        end
     | Lexer.TLParen ->
         advance ();
         if peek () = Lexer.TRParen then (advance (); Ast.PUnit)

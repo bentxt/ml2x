@@ -94,6 +94,7 @@ and pattern =
   | PChar of char
   | PCtor of string * pattern list          (* Circle r | Some x | None | Dot *)
   | PTuple of pattern list
+  | PRecord of (string * pattern) list      (* { a = p1; b = p2 } *)
   | PNil                                    (* [] *)
   | PCons of pattern * pattern              (* x :: xs *)
 

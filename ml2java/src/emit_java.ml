@@ -255,6 +255,24 @@ let decl_params st name =
   | Some (TDRecord r) -> r.rtparams
   | _ -> []
 
+(* Field type of a record-typed value, with the record's declared params
+   replaced by the value's type args.  The checker guarantees the field
+   exists and the scrutinee is the record; the fallback is defensive. *)
+let record_field_typ st ty f =
+  match ty with
+  | TCon (n, args) -> (
+      match Hashtbl.find_opt st.tables.tdecls n with
+      | Some (TDRecord r) -> (
+          match List.find_opt (fun (fn, _, _) -> fn = f) r.rfields with
+          | Some (_, ft, _) ->
+              let params = decl_params st n in
+              if List.length params = List.length args then
+                subst_typ (List.combine params args) ft
+              else ft
+          | None -> TParam "@field")
+      | _ -> TParam "@field")
+  | _ -> TParam "@field"
+
 (* Payload type i of a ctor, with the variant's declared params replaced by
    the scrutinee's type args. *)
 let payload_typ st name targs i =
@@ -446,6 +464,31 @@ let rec compile_pat st ty scrut p =
       ([ Printf.sprintf "(%s == %s)" scrut (if b then "true" else "false") ], [])
   | PChar c -> ([ Printf.sprintf "(%s == %s)" scrut (java_char c) ], [])
   | PTuple ps -> tuple_pat st ty scrut ps
+  | PRecord fs ->
+      (* a pure record reads through accessors, a record with any mutable
+         field through direct field access (same rule as field_expr) *)
+      let rec_has_mutable =
+        match ty with
+        | TCon (n, _) -> (
+            match Hashtbl.find_opt st.tables.tdecls n with
+            | Some (TDRecord rd) ->
+                List.exists (fun (_, _, m) -> m) rd.rfields
+            | _ -> false)
+        | _ -> false
+      in
+      let cs = ref [] and bs = ref [] in
+      List.iter
+        (fun (f, child) ->
+          let ft = record_field_typ st ty f in
+          let access =
+            if rec_has_mutable then Printf.sprintf "(%s).%s" scrut f
+            else Printf.sprintf "(%s).%s()" scrut f
+          in
+          let sc, sb = compile_pat st ft access child in
+          cs := !cs @ sc;
+          bs := !bs @ sb)
+        fs;
+      (!cs, !bs)
   | PCtor ("None", []) -> ([ Printf.sprintf "(%s == null)" scrut ], [])
   | PCtor ("Some", [ inner ]) ->
       let inner_t = match ty with TOption t -> t | t -> t in

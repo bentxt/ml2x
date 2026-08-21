@@ -149,7 +149,7 @@ stderr, exit 1. Checker runs before emission; no half-emitted file.
 
 Identical to ml2java v1's out-of-v1 list (partial application, functions as
 values, modules, functors, exceptions, arrays, char arithmetic,
-record patterns, two-or-more type params on variants, named variant payload
+two-or-more type params on variants, named variant payload
 fields, type aliases, class inheritance beyond interfaces, `open`,
 references, `unit` inside composite types). The TS backend accepts exactly
 the surface the shared checker accepts for `Profile.ts` — nothing more,

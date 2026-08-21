@@ -1,6 +1,0 @@
-type p = { a : int; b : int }
-let f (r : p) : int =
-  match r with
-  | { a = n } -> n
-  | _ -> 0
-let main () : unit = ()
