@@ -1,0 +1,27 @@
+type order = { item : string; qty : int; coupon : string option }
+
+type problem =
+  | Empty_item
+  | Bad_qty of int
+  | Bad_coupon of string
+
+let check (o : order) : problem option =
+  if o.item = "" then Some Empty_item
+  else if o.qty <= 0 then Some (Bad_qty o.qty)
+  else
+    match o.coupon with
+    | None -> None
+    | Some c -> if c = "SAVE10" then None else Some (Bad_coupon c)
+
+let report (o : order) : string =
+  match check o with
+  | None -> "ok: " ^ o.item
+  | Some Empty_item -> "bad: empty item"
+  | Some (Bad_qty n) -> "bad: qty " ^ string_of_int n
+  | Some (Bad_coupon c) -> "bad: coupon " ^ c
+
+let main () : unit =
+  print_endline (report { item = "book"; qty = 2; coupon = Some "SAVE10" });
+  print_endline (report { item = ""; qty = 1; coupon = None });
+  print_endline (report { item = "pen"; qty = 0; coupon = None });
+  print_endline (report { item = "pen"; qty = 1; coupon = Some "NOPE" })

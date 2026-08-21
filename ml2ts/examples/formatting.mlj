@@ -1,0 +1,9 @@
+(* assembling strings: ^ concatenation, number and bool conversion *)
+let line (name : string) (score : int) (pass : bool) : string =
+  name ^ ": " ^ string_of_int score ^ (if pass then " (pass)" else " (fail)")
+
+let main () : unit =
+  print_endline (line "ada" 95 true);
+  print_endline (line "ben" 61 false);
+  print_endline (string_of_float 3.25);
+  print_endline ("utf-8: é→✓")

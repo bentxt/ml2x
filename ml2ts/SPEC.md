@@ -50,7 +50,7 @@ expression or return type, ...).
 | `Some x` / `None` match | `if (v === null) { None arm } else { Some arm }`; the bound `x` is `v` (or `v.v0` when the payload is boxed). |
 | `[]` / `x :: xs` match | `if (v.length === 0) { ... } else { const x = v[0]; const xs = v.slice(1); ... }`. |
 | tuple pattern `(a, b)` | `const [a, b] = v;` inside the arm. |
-| `=` / `<>` | `===` / `!==` on int, bool, char, float, string operands; `_eq(a, b)` / `!_eq(a, b)` on record, variant, list, option, tuple, user objects. `_eq` is a generated deep-structural helper, emitted once, only when used; it compares object keys SORTED, because record literals may be written in any field order and OCaml record equality is order-independent. `NaN = NaN` is false, matching OCaml. |
+| `=` / `<>` | `===` / `!==` on int, bool, char, float, string operands; `_eq(a, b)` / `!_eq(a, b)` on record, variant, list, option, tuple, user objects. `_eq` is a generated deep-structural helper, emitted once, only when used; it compares object keys SORTED, because record literals may be written in any field order and OCaml record equality is order-independent. `NaN = NaN` is false, matching OCaml. TS infers LITERAL types for inline literals, so comparing two different literals (`1 <> 2` -> `1 !== 2`) would fail tsc's "no overlap" check; each literal operand is therefore widened with a no-op `as T` cast (`(1 as number) !== (2 as number)`). |
 | `+ - *` (int/float) | same operators. |
 | `/` (int) | `Math.trunc(a / b)` — OCaml int division truncates toward zero; JS `/` is float division. |
 | `%` (int) | `%` (JS remainder truncates like OCaml `mod`). |

@@ -1,0 +1,4 @@
+ok: book
+bad: empty item
+bad: qty 0
+bad: coupon NOPE

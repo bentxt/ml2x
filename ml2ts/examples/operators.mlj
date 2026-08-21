@@ -1,0 +1,25 @@
+(* Operator surface: `not`, `<>` on ints and strings, `%`, unary minus on
+   arbitrary expressions, string ordering, and string escapes round-tripped
+   through stdout. *)
+
+let neg (x : int) : int = -x
+
+let main () : unit =
+  print_endline (string_of_bool (not true));
+  print_endline (string_of_bool (not (1 > 2)));
+  print_endline (string_of_bool (1 <> 2));
+  print_endline (string_of_bool (1 <> 1));
+  print_endline (string_of_bool ("a" <> "b"));
+  print_endline (string_of_bool ("a" <> "a"));
+  print_endline (string_of_int (17 % 5));
+  print_endline (string_of_int (-(2 + 3)));
+  print_endline (string_of_int (neg (4 - 1)));
+  print_endline (string_of_bool ("abc" < "abd"));
+  print_endline (string_of_bool ("abc" < "ab"));
+  print_endline (string_of_bool ("abc" = "abc"));
+  print_endline ("tab\there");
+  print_endline ("quote\"here");
+  print_endline ("back\\slash");
+  print_endline ("newline\nhere");
+  print_endline ("carriage\rreturn");
+  print_endline ("apostrophe'here")

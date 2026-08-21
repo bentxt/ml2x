@@ -41,6 +41,26 @@ for src in test/*.mlj; do
   fi
 done
 
+for src in examples/*.mlj; do
+  name=$(basename "$src" .mlj)
+  step "compile example $name"
+  if "$EXE" "$src" -o "$TMP/$name.ts" 2>"$TMP/$name.err"; then ok; else bad; cat "$TMP/$name.err"; continue; fi
+
+  step "tsc example $name"
+  if tsc --strict --noEmit --target es2020 --lib es2020 "$TMP/$name.ts" 2>"$TMP/$name.tsc"; then ok; else bad; cat "$TMP/$name.tsc"; continue; fi
+
+  if [ -f "examples/$name.out" ]; then
+    step "run example $name"
+    node "$TMP/$name.ts" >"$TMP/$name.run" 2>"$TMP/$name.run.err"
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+      bad; echo "  node exited with status $rc:"; sed 's/^/  /' "$TMP/$name.run.err"
+    elif [ -s "$TMP/$name.run.err" ]; then
+      bad; echo "  node wrote to stderr:"; sed 's/^/  /' "$TMP/$name.run.err"
+    elif diff -u "examples/$name.out" "$TMP/$name.run" >"$TMP/$name.diff"; then ok; else bad; cat "$TMP/$name.diff"; fi
+  fi
+done
+
 for src in test/reject/*.mlj; do
   name=$(basename "$src" .mlj)
   step "reject $name"

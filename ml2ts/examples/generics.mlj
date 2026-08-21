@@ -1,0 +1,17 @@
+(* One type variable, used twice, stays one type: id accepts anything and
+   returns exactly what it got.  swap uses two variables independently. *)
+let id (x : 'a) : 'a = x
+
+let swap (x : 'a) (y : 'b) : 'b * 'a = (y, x)
+
+let rep (x : 'a) : 'a * 'a = (x, x)
+
+let main () : unit =
+  print_endline (string_of_int (id 41 + 1));
+  print_endline (id "string");
+  print_endline (if id true then "yes" else "no");
+  let (a, b) = swap "left" 9 in
+  print_endline (string_of_int a);
+  print_endline b;
+  let (p, q) = rep 7 in
+  print_endline (string_of_int (p + q))

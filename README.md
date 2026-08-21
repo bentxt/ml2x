@@ -1,91 +1,96 @@
 # ML2X
 
-ML2X is an early-stage exploration of compiling a deliberately restricted
-ML/OCaml-shaped language into readable code for other platforms.
+ML2X compiles a deliberately restricted ML/OCaml-shaped language (`.mlj`)
+into readable code for other platforms. Each target backend shares one
+frontend — lexer, parser, and semantic checker in `shared/` — and accepts
+only source constructs that have a direct, predictable representation in
+that target language. ML2X is not intended to compile every OCaml feature
+or reproduce the OCaml runtime on other platforms.
 
-The central rule is simple: each target accepts only source constructs that
-have a direct and predictable representation in that target language. ML2X is
-not intended to compile every OCaml feature or reproduce the OCaml runtime on
-other platforms.
+Two backends are complete and gated by identical test harnesses:
 
-## Proposed model
+- **ml2java** — `.mlj` → ordinary Java (`ml2java/`, the reference backend).
+  Records → Java `record`s, variants → sealed interfaces, classes →
+  nested `static final` classes, `option` erased to nullable.
+- **ml2ts** — `.mlj` → a TypeScript module that runs on Node
+  (`ml2ts/`). Records → `interface`s, variants → discriminated unions,
+  classes → `class`es, `option` erased to `T | null`.
 
-Each target backend would provide two parts:
+Both backends compile the **same** positive fixtures and examples (the
+`.out` expected-output files are shared) and run the same deterministic
+fuzz lanes. This is the "one frontend, multiple targets" proof: the shared
+frontend stays shared — target-specific semantic decisions live in
+`shared/profile.ml` and `shared/check.ml` behind profile flags, and each
+target's emitter implements its own "what does this construct mean here".
 
-1. A subset checker that validates syntax and target-specific semantics.
-2. A lowering and code-generation pipeline that emits ordinary, readable
-   target-language code.
+## Layout
 
-Likely portable constructs include:
+```text
+shared/            lexer, parser, AST, semantic checker, profiles
+ml2java/           Java backend (SPEC.md, README.md, TUTORIAL.md, check.sh)
+ml2ts/             TypeScript backend (SPEC.md, README.md, check.sh)
+book/              the ML2X book (pandoc, `make book`)
+```
 
-- `let` bindings and ordinary functions
-- records and algebraic data types
-- pattern matching
-- tuples, options, and results
-- parametric types
-- immutable data
-- simple modules or namespaces
-- explicit mutation where its behavior is well defined
+## Build and run
 
-Features such as functors, first-class modules, GADTs, polymorphic variants,
-advanced object typing, and pervasive partial application may be restricted or
-rejected by individual targets.
+Requires: OCaml with `dune`, a JDK (`ml2java`), `tsc` 5.9+ and Node 22+
+(`ml2ts`).
 
-## Possible targets
+```sh
+cd ml2java && dune build && sh check.sh     # Java suite (javac -Werror gate)
+cd ml2ts   && dune build && sh check.sh     # TS suite (tsc --strict gate)
+```
 
-### `ml2java`
+Each backend's CLI:
 
-The proposed Java target has two possible source facilities:
+```sh
+ml2java input.mlj          # writes input.java (basename-constrained -o)
+ml2ts   input.mlj          # writes input.ts (any -o basename)
+```
 
-- a portable functional subset for domain logic, records, variants, matching,
-  validation, and workflows;
-- an optional Java-only ML-shaped object syntax that maps directly to normal
-  Java classes, fields, constructors, methods, interfaces, and annotations.
+Errors are one line on stderr, `file.mlj:line:col: error: message`, exit 1,
+and no output file is written on failure.
 
-The intended output is ordinary Java that integrates with normal JVM tools and
-libraries, rather than an emulated OCaml environment.
+## The shared frontend
 
-### `ml2ts`
+`shared/` holds the contract modules: `ast.ml` (the AST), `lexer.ml` +
+`parser.ml` (hand-written), `check.ml` (semantic validation + type table),
+`profile.ml` (per-target profile flags). Backends are parameterized by
+`Profile.t`; a target-specific semantic decision goes into the shared
+checker behind a profile flag, never into a per-target fork of the
+frontend.
 
-The proposed TypeScript target follows the same subset-checking model and aims
-to produce readable TypeScript. Browser, JavaScript, and TypeScript-specific
-features would remain in a target-specific layer instead of entering the
-portable core.
+## Semantic differences between targets
 
-## OCaml and MirageOS
+Documented in each backend's `SPEC.md`. The deliberate ones:
 
-Portable product and domain code may remain mostly free of OCaml functors.
-MirageOS composition, device injection, and other target-specific integration
-can stay in handwritten OCaml around a higher-level capability boundary.
+- `int` is `long` in Java and `number` in TS (beyond ±2^53, JS loses
+  precision; the shared `Lit.mlj` boundary fixture is Java-only).
+- Equality: Java uses `==`/`.equals`/`Objects.equals`; TS uses
+  `===`/`!==` plus a generated deep-structural `_eq` helper.
+- Float printing: TS emits a `_fmt_float` helper reproducing Java's
+  `Double.toString` forms so the shared `.out` files pass.
+- Int division truncates in both targets (`Math.trunc` in TS).
+- TS-only name-namespace rules (class members; values vs classes) are
+  enforced behind profile flags; the Java profile is unchanged.
 
-Real OCaml remains the escape hatch when a feature does not translate cleanly.
+## Tests
 
-## Current status
+`sh check.sh` in each backend builds the compiler, compiles every
+fixture and example, runs it (javac/java or tsc/node), diffs stdout
+against the shared `.out` file, requires rejects to fail with located
+errors, checks the CLI contract, checks determinism, and runs the fuzz
+harness (`FUZZ_N` seeds per lane, default 60). The fuzz generator lives in
+`ml2java/tools/gen_fuzz.ml` and is reused by the TS backend.
 
-The assessment of the existing FS2ML/ocamlsharp compiler is complete; see
-[`ASSESSMENT.md`](ASSESSMENT.md).
+## Project docs
 
-A first ML2X backend now exists: [`ml2java/`](ml2java/) is a working v1
-compiler (parser, semantic checker, Java emitter) from OCaml-shaped `.mlj`
-source to Java. [`ml2java/README.md`](ml2java/README.md) documents usage and
-the generated Java; [`ml2java/SPEC.md`](ml2java/SPEC.md) is the language
-contract. `sh ml2java/check.sh` builds it, compiles the fixtures, runs them
-under `javac`/`java`, and checks expected stdout, stderr, exit status, and
-rejection diagnostics. The dependability findings from the 2026-08-20
-morning assessment were all reproduced and verified fixed the same day;
-see [`assessment_20260820_175225.md`](assessment_20260820_175225.md). The
-suite's deterministic fuzz lanes (`FUZZ_N`, default 60 in `check.sh`) gate
-every generated program through `javac -Xlint:all -Werror`, execution with
-clean exit and stderr, and a byte-identical recompile.
-
-The full brief for the (completed) FS2ML review is in
-[`handoff.md`](handoff.md).
-
-## Project principles
-
-- Prefer small, explicit target subsets.
-- Validate semantics, not syntax alone.
-- Generate straightforward target-language code.
-- Avoid substantial runtime emulation.
-- Keep target-specific code outside the portable core.
-- Preserve handwritten OCaml for MirageOS-specific integration.
+- `ml2java/SPEC.md` — the shared language contract from the Java side
+  (if the spec and `shared/ast.ml` disagree, the AST wins).
+- `ml2ts/SPEC.md` — the TS mapping contract.
+- `book/` — the ML2X book (intro, spec, tutorial, backend chapters,
+  verification); `make book` regenerates `book/book.html`.
+- `ASSESSMENT.md`, `assessment_*.md` — the FS2ML review and the ml2java
+  verification passes that the current architecture and test gates came
+  out of.

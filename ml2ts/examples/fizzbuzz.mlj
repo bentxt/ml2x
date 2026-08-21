@@ -1,0 +1,13 @@
+(* for i = 1 to n and mutable state, the classic *)
+let main () : unit =
+  let mutable acc = "" in
+  for i = 1 to 15 do
+    let s =
+      if i % 15 = 0 then "fizzbuzz"
+      else if i % 3 = 0 then "fizz"
+      else if i % 5 = 0 then "buzz"
+      else string_of_int i
+    in
+    acc <- acc ^ s ^ " "
+  done;
+  print_endline acc

@@ -1,0 +1,29 @@
+(* Tuples: Tuple3 construction, nested tuple patterns, fst/snd on Tuple2,
+   and structural tuple equality. *)
+
+let triple (a : int) (b : string) (c : bool) : int * string * bool =
+  (a, b, c)
+
+let swap (p : int * string) : string * int = (snd p, fst p)
+
+let sum3 (t : int * int * int) : int =
+  let (a, b, c) = t in
+  a + b + c
+
+let main () : unit =
+  let t = triple 1 "one" true in
+  let (n, s, b) = t in
+  print_endline (string_of_int n);
+  print_endline s;
+  print_endline (string_of_bool b);
+  let p = (1, "a") in
+  let (s2, n2) = swap p in
+  print_endline (s2 ^ string_of_int n2);
+  print_endline (string_of_int (sum3 (1, 2, 3)));
+  print_endline (string_of_bool ((1, "a") = (1, "a")));
+  print_endline (string_of_bool ((1, "a") = (2, "a")));
+  print_endline (string_of_bool ((1, "a") <> (2, "a")));
+  let p2 = ((1, 2), 3) in
+  let (q, z) = p2 in
+  let (x, y) = q in
+  print_endline (string_of_int (x + y + z))

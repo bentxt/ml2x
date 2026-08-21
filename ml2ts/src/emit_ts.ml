@@ -778,7 +778,27 @@ and bin_expr st op a b =
   | Mod -> s "%"
   | Concat -> s "+"
   | Eq | Ne ->
-      if is_value_typed at then s (if op = Eq then "===" else "!==")
+      if is_value_typed at then (
+        (* TS infers LITERAL types for inline literals; comparing two
+           different literals (`1 <> 2` -> `1 !== 2`) then fails with
+           "no overlap".  A no-op `as T` cast on each literal operand
+           widens it back to its plain type (`(1 as number) !== (2 as
+           number)`). *)
+        let rec is_literal e =
+          match e.desc with
+          | EInt _ | EFloat _ | EBool _ | EChar _ | EStr _ -> true
+          | ETyped (e', _) -> is_literal e'
+          | _ -> false
+        in
+        let widen e txt =
+          if is_literal e then
+            "(" ^ txt ^ " as " ^ jtype st (t_of st e) ^ ")"
+          else txt
+        in
+        let a' = widen a as_ in
+        let btxt = bs () in
+        let b' = widen b btxt in
+        "(" ^ a' ^ " " ^ (if op = Eq then "===" else "!==") ^ " " ^ b' ^ ")")
       else (
         st.use_eq <- true;
         let eq = "_eq(" ^ as_ ^ ", " ^ bs () ^ ")" in

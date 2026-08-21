@@ -11,9 +11,11 @@ backend; `ml2ts/SPEC.md` is this backend's binding contract.
 - `bin/ml2ts.ml` — the CLI.
 - `test/` — shared fixtures (copied from `ml2java/test/`, same `.out`
   files must pass) plus TS-specific rejects.
-- `check.sh` — end-to-end gate: build, compile fixtures, `tsc --strict`,
-  run under Node, diff stdout, reject fixtures, CLI contract,
-  determinism, fuzz.
+- `examples/` — shared example programs (copied from `ml2java/examples/`,
+  same `.out` files), gated exactly like test fixtures.
+- `check.sh` — end-to-end gate: build, compile fixtures and examples,
+  `tsc --strict`, run under Node, diff stdout, reject fixtures, CLI
+  contract, determinism, fuzz.
 - `fuzz.sh` — deterministic fuzz (reuses `ml2java/tools/gen_fuzz.exe`).
 
 ## Usage
@@ -31,7 +33,7 @@ sh check.sh               # full suite (FUZZ_N=60 by default)
 FUZZ_N=10 sh check.sh     # quick pass
 ```
 
-Each fixture: `ml2ts file.mlj -o out.ts` -> `tsc --strict --noEmit
+Each fixture/example: `ml2ts file.mlj -o out.ts` -> `tsc --strict --noEmit
 --target es2020 --lib es2020 out.ts` -> `node out.ts` (exit 0, empty
 stderr) -> stdout diff vs `.out`. Reject fixtures must fail with a located
 one-line error. `tsc` 5.9+ and Node 22+ are required.
