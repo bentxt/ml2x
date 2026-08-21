@@ -6,6 +6,7 @@ ml2java/fuzz-artifacts-*/
 /hello.java
 /hello.class
 /ml2java/examples/*.java
+/ml2ts/examples/*.ts
 /_build/
 /ml2ts/_build/
 /ml2ts/fuzz-artifacts-*/
