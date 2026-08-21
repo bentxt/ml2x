@@ -177,8 +177,9 @@ compiled to TS, type-checked, run, and diffed against the shared `.out`;
 12 shared examples
 (`hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
 `operators`, `tuples`, `generics`, `tree`, `formatting`, `fizzbuzz`);
-57 shared reject fixtures plus 4 TS-specific ones (`ts_keyword`,
-`ts_await`, `class_member_collision`, `value_class_collision`).
+57 shared reject fixtures plus 7 TS-specific ones (`ts_keyword`,
+`ts_await`, `ts_constructor`, `ts_eval`, `ts_undefined`,
+`class_member_collision`, `value_class_collision`).
 
 ## Layout
 

@@ -1,0 +1,4 @@
+class c =
+  object (self)
+    method constructor () : int = 1
+  end

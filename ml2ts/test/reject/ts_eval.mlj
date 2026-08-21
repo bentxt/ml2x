@@ -1,0 +1,3 @@
+let eval (x : int) : int = x
+
+let main () : unit = print_int (eval 1)
