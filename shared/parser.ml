@@ -764,7 +764,29 @@ let parse_program ~file src =
     let tparams = ref [] in
     let rec collect_tparams () =
       match peek () with
-      | Lexer.TTypeVar v -> advance (); tparams := v :: !tparams; collect_tparams ()
+      | Lexer.TTypeVar v ->
+          advance ();
+          tparams := v :: !tparams;
+          collect_tparams ()
+      | Lexer.TLParen ->
+          (* OCaml's parenthesized form: type ('a, 'b) pr = ... *)
+          advance ();
+          if peek () = Lexer.TRParen then
+            error "empty type parameter list"
+          else begin
+            let rec go () =
+              match peek () with
+              | Lexer.TTypeVar v ->
+                  advance ();
+                  tparams := v :: !tparams;
+                  (match peek () with
+                  | Lexer.TComma -> advance (); go ()
+                  | Lexer.TRParen -> advance ()
+                  | _ -> error "expected `,` or `)` in the type parameter list")
+              | _ -> error "expected a type parameter in the list"
+            in
+            go ()
+          end
       | _ -> ()
     in
     collect_tparams ();
@@ -792,10 +814,6 @@ let parse_program ~file src =
              rfields = List.rev !fields; rpos = dpos })
     end
     else begin
-      if List.length !tparams >= 2 then
-        error
-          "variants with two or more type parameters are not supported in \
-           v1 (SPEC)";
       (* a lower-case type name after `=` reads as an alias attempt *)
       (match peek () with
        | Lexer.TIdent s ->

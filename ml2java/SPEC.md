@@ -128,8 +128,7 @@ List.length    xs       -> xs.size()
 partial application, functions as values / `fun x -> e`, modules, functors,
 exceptions (`raise`, `try`), arrays, float-less `+.`-free mixes requiring
 promotion (int+float is an error, not auto-coerce, except literals? no: error),
-char arithmetic, two-or-more type params on
-variants (records allow any), named variant payload fields, type aliases,
+char arithmetic, named variant payload fields, type aliases,
 class inheritance (`inherit` only takes class type names = interfaces),
 `open`, references (`ref`, `:=`, `!`), a named parameter of type `unit`
 (write `()`, which is dropped from the Java signature), and `unit` inside

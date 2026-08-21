@@ -1,0 +1,23 @@
+(* Two-parameter variant: `type ('a, 'b) pr = P of 'a | Q of 'b` with
+   parenthesized type parameters, mixed-type applications, constructor
+   patterns, and a generic record control (records already allowed any
+   arity). *)
+
+type ('a, 'b) pr = P of 'a | Q of 'b
+
+type ('a, 'b) pair = { fst : 'a; snd : 'b }
+
+let pick (x : (int, string) pr) : string =
+  match x with
+  | P n -> string_of_int n
+  | Q s -> s
+
+let swap (p : ('a, 'b) pair) : ('b, 'a) pair = { fst = p.snd; snd = p.fst }
+
+let main () : unit =
+  print_endline (pick (P 42));
+  print_endline (pick (Q "hi"));
+  print_endline (pick (P 7));
+  let p = swap { fst = 1; snd = "one" } in
+  print_endline p.fst;
+  print_endline (string_of_int p.snd)

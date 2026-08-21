@@ -13,7 +13,8 @@
                                 `([] : int list)`, `let c1 : itf = ...`
      - records                 literal, shuffled field order, mutable
                                 field assignment, record equality
-     - variants                `type shape = ...`, all-constructor matches
+     - variants                `type shape = ...`, all-constructor matches,
+                                two-param `type ('a, 'b) pr = ...`
      - records                 literals (shuffled field order), field
                                 access, mutation, record patterns in match
      - options incl. nested    `Some (Some n)` / `Some None` / `None`
@@ -75,6 +76,8 @@ let gen_program seed =
         "  print_endline (string_of_int (sum u0));";
         "  print_endline (string_of_int (List.length u0));";
         "  print_endline (string_of_int (rec_pat r0));";
+        "  print_endline (pick_pr (P " ^ ri () ^ "));";
+        "  print_endline (pick_pr (Q " ^ rs () ^ "));";
         "  print_endline (string_of_bool sc);";
         "  print_endline (recolor (Some " ^ ri () ^ "));";
         "  print_endline (recolor None);";
@@ -136,6 +139,7 @@ let gen_program seed =
         "";
         "type shape = Circle of float | Rect of float * float | Dot";
         "type box = { fld_a : int; fld_b : string; mutable fld_c : int }";
+        "type ('a, 'b) pr = P of 'a | Q of 'b";
         "class type itf = object";
         "  method label () : string";
         "end";
@@ -198,6 +202,10 @@ let gen_program seed =
         "let rec_pat (b : box) : int =";
         "  match b with";
         "  | { fld_a = a; fld_b = _; fld_c = c } -> a + c";
+        "let pick_pr (x : (int, string) pr) : string =";
+        "  match x with";
+        "  | P n -> string_of_int n";
+        "  | Q s -> s";
       ]
   in
   String.concat "\n\n" [ head; helpers; main ]

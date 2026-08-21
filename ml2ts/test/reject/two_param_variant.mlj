@@ -1,2 +1,0 @@
-type ('a, 'b) pr = P of 'a | Q of 'b
-let main () : unit = ()
