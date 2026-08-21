@@ -216,10 +216,10 @@ printing boundaries: Java's `Double.toString` switches to scientific
 notation outside 10^-3 .. 10^7 and prints `Infinity`/`-Infinity`/`NaN`/
 `-0.0` for specials; both backends must print the exact same forms), and
 `OptEq` (nested-option equality: `Some None` stays distinct from `None`
-under `=` at one, two, and three levels of nesting).  Twelve examples under `examples/` are compiled and run the same
+under `=` at one, two, and three levels of nesting).  Thirteen examples under `examples/` are compiled and run the same
 way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
-`operators`, `tuples`, `generics`, `tree`, `formatting`, and
-`fizzbuzz`.
+`operators`, `tuples`, `generics`, `tree`, `formatting`, `fizzbuzz`,
+and `loops` (statement-bearing `while` conditions, for-range, for-in).
 
 ## Layout
 

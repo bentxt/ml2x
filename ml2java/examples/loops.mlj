@@ -1,0 +1,22 @@
+(* Loops and mutation: a mutable local driven by `while` (including a
+   statement-bearing condition, which re-evaluates on every iteration),
+   a counting `for`, and a `for ... in` over a list. *)
+
+let main () : unit =
+  (* while: the condition re-evaluates each iteration *)
+  let mutable i = 0 in
+  while (i <- i + 1; i < 4) do
+    print_int i
+  done;
+  print_endline "";
+  (* for-range with a mutable accumulator *)
+  let mutable acc = 0 in
+  for k = 1 to 5 do
+    acc <- acc + k
+  done;
+  print_endline (string_of_int acc);
+  (* for-in over a list *)
+  for x in [10; 20; 30] do
+    print_int x
+  done;
+  print_endline ""

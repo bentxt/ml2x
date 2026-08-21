@@ -174,9 +174,9 @@ int boundary values cannot be represented in JS) — `Core`, `Misc`,
 `Objects`, `Interp`, `Edge`, `Order`, `DupItf`, `NewUnit`,
 `GuardChain`, `MixedRec`, `GenPoll`, `FloatPrint`, `OptEq` — each
 compiled to TS, type-checked, run, and diffed against the shared `.out`;
-12 shared examples
-(`hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
-`operators`, `tuples`, `generics`, `tree`, `formatting`, `fizzbuzz`);
+13 shared examples (`hello`, `counters`, `validate`, `lists`, `options`,
+`shapes`, `operators`, `tuples`, `generics`, `tree`, `formatting`,
+`fizzbuzz`, `loops`);
 57 shared reject fixtures plus 7 TS-specific ones (`ts_keyword`,
 `ts_await`, `ts_constructor`, `ts_eval`, `ts_undefined`,
 `class_member_collision`, `value_class_collision`).
