@@ -1,6 +1,6 @@
 MD = $(wildcard book/*.md)
 
-.PHONY: book ml2java pdf clean
+.PHONY: book ml2java ml2ts pdf clean
 
 book:
 	@test -n "$(MD)" || { echo "no book/*.md files yet"; exit 1; }
@@ -8,6 +8,9 @@ book:
 
 ml2java:
 	cd ml2java && dune build
+
+ml2ts:
+	cd ml2ts && dune build
 
 pdf:
 	@test -n "$(MD)" || { echo "no book/*.md files yet"; exit 1; }
