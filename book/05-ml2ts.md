@@ -169,11 +169,12 @@ FUZZ_N=0 sh fuzz.sh        # skip
    a located error line (or pass the same gate). `FUZZ_N` seeds per lane
    (default 60), 0 skips.
 
-Current tests: 12 shared positive fixtures (all but `Lit`, whose 63-bit
+Current tests: 13 shared positive fixtures (all but `Lit`, whose 63-bit
 int boundary values cannot be represented in JS) — `Core`, `Misc`,
 `Objects`, `Interp`, `Edge`, `Order`, `DupItf`, `NewUnit`,
-`GuardChain`, `MixedRec`, `GenPoll`, `FloatPrint` — each compiled to TS,
-type-checked, run, and diffed against the shared `.out`; 12 shared examples
+`GuardChain`, `MixedRec`, `GenPoll`, `FloatPrint`, `OptEq` — each
+compiled to TS, type-checked, run, and diffed against the shared `.out`;
+12 shared examples
 (`hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
 `operators`, `tuples`, `generics`, `tree`, `formatting`, `fizzbuzz`);
 57 shared reject fixtures plus 4 TS-specific ones (`ts_keyword`,

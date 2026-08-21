@@ -211,10 +211,12 @@ methods), and `NewUnit` (class constructors with `()` parameters and
 unit-typed call arguments), `GuardChain` (guarded matches compile to
 linear-size labeled blocks), `MixedRec` (field reads on records that
 mix mutable and immutable fields), `GenPoll` (back-to-back generic
-functions keep independent type variables), and `FloatPrint` (float
+functions keep independent type variables), `FloatPrint` (float
 printing boundaries: Java's `Double.toString` switches to scientific
-notation outside 10^-3 .. 10^7, and both backends must print the exact
-same forms).  Twelve examples under `examples/` are compiled and run the same
+notation outside 10^-3 .. 10^7 and prints `Infinity`/`-Infinity`/`NaN`/
+`-0.0` for specials; both backends must print the exact same forms), and
+`OptEq` (nested-option equality: `Some None` stays distinct from `None`
+under `=` at one, two, and three levels of nesting).  Twelve examples under `examples/` are compiled and run the same
 way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
 `operators`, `tuples`, `generics`, `tree`, `formatting`, and
 `fizzbuzz`.
