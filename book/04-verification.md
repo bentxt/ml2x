@@ -74,8 +74,8 @@ mismatch above is an example).
 
 ## What is still true
 
-- `check.sh`'s default fuzz depth is 30 seeds; deeper runs are manual
-  (`FUZZ_N=500` took ~9 minutes, found nothing).
+- `check.sh`'s default fuzz depth is 60 seeds per lane; deeper runs are
+  manual (`FUZZ_N=500` took ~9 minutes, found nothing).
 - Before today, `fuzz.sh` left an empty `fuzz-artifacts-<pid>/` directory
   behind on every successful run. Fixed today: the evidence directory is
   removed on success and kept only when a counterexample fills it. The five
