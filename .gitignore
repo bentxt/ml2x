@@ -2,3 +2,13 @@ glm52-claude.sh
 .DS_Store
 ml2java/_build/
 ml2java/fuzz-artifacts-*/
+/bin/
+/hello.java
+/hello.class
+/ml2java/examples/*.java
+/_build/
+/ml2ts/_build/
+/ml2ts/fuzz-artifacts-*/
+/ml2ts/node_modules/
+/book/book.html
+/book/book.pdf
