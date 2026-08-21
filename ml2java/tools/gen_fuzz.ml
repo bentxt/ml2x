@@ -15,6 +15,7 @@
                                 field assignment, record equality
      - variants                `type shape = ...`, all-constructor matches,
                                 two-param `type ('a, 'b) pr = ...`
+     - type aliases            `type pr_int_str = (int, string) pr`
      - records                 literals (shuffled field order), field
                                 access, mutation, record patterns in match
      - options incl. nested    `Some (Some n)` / `Some None` / `None`
@@ -203,7 +204,8 @@ let gen_program seed =
         "let rec_pat (b : box) : int =";
         "  match b with";
         "  | { fld_a = a; fld_b = _; fld_c = c } -> a + c";
-        "let pick_pr (x : (int, string) pr) : string =";
+        "type pr_int_str = (int, string) pr";
+        "let pick_pr (x : pr_int_str) : string =";
         "  match x with";
         "  | P n -> string_of_int n";
         "  | Q s -> s";

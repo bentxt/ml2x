@@ -1,0 +1,25 @@
+(* Type aliases: concrete aliases, generic aliases, aliases of aliases,
+   and aliases used in annotations.  Aliases expand in the checker, so
+   the emitted targets see only the expanded type. *)
+
+type score = int
+type name = string
+type 'a list2 = 'a list
+type ('a, 'b) pair = 'a * 'b
+type score_pair = (score, name) pair
+type alias_chain = score
+
+let add (a : score) (b : score) : score = a + b
+
+let greet (n : name) : string = "hi " ^ n
+
+let sum2 (xs : int list2) : int = List.length xs
+
+let first_of (p : score_pair) : score = fst p
+
+let main () : unit =
+  print_endline (string_of_int (add 3 4));
+  print_endline (greet "bob");
+  print_endline (string_of_int (sum2 [1; 2; 3]));
+  print_endline (string_of_int (first_of (7, "x")));
+  print_endline (string_of_int ((42 : alias_chain)))

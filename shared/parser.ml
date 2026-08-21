@@ -817,55 +817,58 @@ let parse_program ~file src =
            { Ast.rname = name; rtparams = List.rev !tparams;
              rfields = List.rev !fields; rpos = dpos })
     end
-    else begin
-      (* a lower-case type name after `=` reads as an alias attempt *)
-      (match peek () with
-       | Lexer.TIdent s ->
-           error
-             (Printf.sprintf
-                "type aliases are not supported in v1; `%s` must be a \
-                 variant (uppercase constructors) or a record" s)
-       | _ -> ());
-      if peek () = Lexer.TKey "|" then advance ();
-      let ctors = ref [] in
-      let rec go () =
-        let cname =
-          match peek () with
-          | Lexer.TUctor s -> advance (); s
-          | _ -> error "expected a constructor name (uppercase) in the variant"
-        in
-        let payload =
-          if is_keyword "of" then begin
-            advance ();
-            let reject_named () =
-              if peek () = Lexer.TColon then
-                error
-                  "named variant payload fields are not supported in v1 \
-                   (SPEC)"
+    else
+      (* a lower-case type name after `=` is a type alias *)
+      match peek () with
+      | Lexer.TIdent _ | Lexer.TTypeVar _ | Lexer.TLParen ->
+          (* parse_type consumes the target type itself *)
+          let expands = parse_type () in
+          Ast.DType
+            (Ast.TDTypeAlias
+               { Ast.aname = name; atparams = List.rev !tparams;
+                 aexpands = expands; apos = dpos })
+      | _ ->
+          if peek () = Lexer.TKey "|" then advance ();
+          let ctors = ref [] in
+          let rec go () =
+            let cname =
+              match peek () with
+              | Lexer.TUctor s -> advance (); s
+              | _ ->
+                  error
+                    "expected a constructor name (uppercase) in the variant"
             in
-            let comps = ref [ parse_type_component () ] in
-            reject_named ();
-            while peek () = Lexer.TStar do
+            let payload =
+              if is_keyword "of" then begin
+                advance ();
+                let reject_named () =
+                  if peek () = Lexer.TColon then
+                    error
+                      "named variant payload fields are not supported in v1 \
+                       (SPEC)"
+                in
+                let comps = ref [ parse_type_component () ] in
+                reject_named ();
+                while peek () = Lexer.TStar do
+                  advance ();
+                  comps := parse_type_component () :: !comps;
+                  reject_named ()
+                done;
+                List.rev !comps
+              end
+              else []
+            in
+            ctors := (cname, payload) :: !ctors;
+            if peek () = Lexer.TKey "|" then begin
               advance ();
-              comps := parse_type_component () :: !comps;
-              reject_named ()
-            done;
-            List.rev !comps
-          end
-          else []
-        in
-        ctors := (cname, payload) :: !ctors;
-        if peek () = Lexer.TKey "|" then begin
-          advance ();
-          go ()
-        end
-      in
-      go ();
-      Ast.DType
-        (Ast.TDVariant
-           { Ast.vname = name; vtparams = List.rev !tparams;
-             vctors = List.rev !ctors; vpos = dpos })
-    end
+              go ()
+            end
+          in
+          go ();
+          Ast.DType
+            (Ast.TDVariant
+               { Ast.vname = name; vtparams = List.rev !tparams;
+                 vctors = List.rev !ctors; vpos = dpos })
 
   and parse_let_decl () =
     let dpos = peek_pos () in

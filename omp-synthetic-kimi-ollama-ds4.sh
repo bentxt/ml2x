@@ -3,8 +3,8 @@
 set -eu
 
 MAIN_MODEL="synthetic/hf:moonshotai/Kimi-K3:max"
-TASK_MODEL="ollama-cloud/deepseek-v4-flash:0731:max"
-SMOL_MODEL="ollama-cloud/deepseek-v4-flash:0731:high"
+TASK_MODEL="ollama-openai/deepseek-v4-flash:0731:max"
+SMOL_MODEL="ollama-openai/deepseek-v4-flash:0731:high"
 
 if [ -n "${OMP_BIN:-}" ]; then
   if [ ! -x "$OMP_BIN" ]; then
@@ -58,12 +58,58 @@ fi
 umask 077
 RUNTIME_DIR=$(mktemp -d "${TMPDIR:-/tmp}/omp-kimi-ds4.XXXXXX")
 OMP_CONFIG="$RUNTIME_DIR/config.yml"
+OMP_EXTENSION="$RUNTIME_DIR/ollama-openai-provider.js"
 
 cleanup() {
-  rm -f "$OMP_CONFIG"
+  rm -f "$OMP_CONFIG" "$OMP_EXTENSION"
   rmdir "$RUNTIME_DIR" 2>/dev/null || true
 }
 trap cleanup EXIT HUP INT TERM
+
+# OMP's bundled Ollama Cloud provider consumes native JSONL. Register the same
+# cloud service through Ollama's OpenAI-compatible SSE endpoint instead.
+cat >"$OMP_EXTENSION" <<'EOF'
+export default function ollamaOpenAIProvider(pi) {
+  const apiKey = process.env.OLLAMA_CLOUD_API_KEY;
+  if (!apiKey) {
+    throw new Error("OLLAMA_CLOUD_API_KEY is missing");
+  }
+
+  pi.registerProvider("ollama-openai", {
+    baseUrl: "https://ollama.com/v1",
+    apiKey,
+    authHeader: true,
+    api: "openai-completions",
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: true,
+      supportsUsageInStreaming: true,
+    },
+    models: [
+      {
+        id: "deepseek-v4-flash:0731",
+        name: "DeepSeek V4 Flash 0731 (Ollama OpenAI transport)",
+        reasoning: true,
+        input: ["text"],
+        contextWindow: 1048576,
+        maxTokens: 65536,
+        cost: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+        },
+        thinking: {
+          mode: "effort",
+          efforts: ["low", "high", "max"],
+          defaultLevel: "max",
+          requiresEffort: true,
+        },
+      },
+    ],
+  });
+}
+EOF
 
 printf '%s\n' \
   'modelRoles:' \
@@ -75,7 +121,7 @@ printf '%s\n' \
   '  showResolvedModelBadge: true' \
   'retry:' \
   '  enabled: true' \
-  '  maxRetries: 2' \
+  '  maxRetries: 3' \
   '  baseDelayMs: 500' \
   '  maxDelayMs: 5000' \
   '  modelFallback: true' \
@@ -94,7 +140,11 @@ printf '%s\n' \
 set +e
 SYNTHETIC_API_KEY="$SYNTHETIC_API_KEY" \
 OLLAMA_CLOUD_API_KEY="$OLLAMA_CLOUD_API_KEY" \
-"$OMP_BIN" --config "$OMP_CONFIG" --model "$MAIN_MODEL" "$@"
+"$OMP_BIN" \
+  --extension "$OMP_EXTENSION" \
+  --config "$OMP_CONFIG" \
+  --model "$MAIN_MODEL" \
+  "$@"
 OMP_STATUS=$?
 set -e
 

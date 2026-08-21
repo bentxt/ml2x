@@ -182,6 +182,17 @@ let check_no_unit st ~at (t : typ) =
       "type unit is not allowed inside list, option, tuple, or type-argument \
        positions (Java has no void value)"
 
+(* substitute declaration type parameters with concrete types *)
+let rec subst_params (env : (string * typ) list) (t : typ) : typ =
+  match t with
+  | TParam p -> (
+      match List.assoc_opt p env with Some t -> t | None -> t)
+  | TList t -> TList (subst_params env t)
+  | TOption t -> TOption (subst_params env t)
+  | TTuple ts -> TTuple (List.map (subst_params env) ts)
+  | TCon (n, ts) -> TCon (n, List.map (subst_params env) ts)
+  | _ -> t
+
 (* Validate a type annotation: every user type name must exist and receive
    the number of type arguments its declaration carries. *)
 let rec check_ty st ~at (t : typ) : typ =
@@ -196,6 +207,7 @@ let rec check_ty st ~at (t : typ) : typ =
         match Hashtbl.find_opt st.tdecls n with
         | Some (TDRecord r) -> List.length r.rtparams
         | Some (TDVariant v) -> List.length v.vtparams
+        | Some (TDTypeAlias a) -> List.length a.atparams
         | None -> (
             match Hashtbl.find_opt st.classes n with
             | Some _ -> 0
@@ -208,18 +220,13 @@ let rec check_ty st ~at (t : typ) : typ =
       if List.length ts <> arity then
         errp st at
           (Printf.sprintf "type '%s' expects %d type argument(s)" n arity);
-      TCon (n, List.map (check_ty st ~at) ts)
-
-(* substitute declaration type parameters with concrete types *)
-let rec subst_params (env : (string * typ) list) (t : typ) : typ =
-  match t with
-  | TParam p -> (
-      match List.assoc_opt p env with Some t -> t | None -> t)
-  | TList t -> TList (subst_params env t)
-  | TOption t -> TOption (subst_params env t)
-  | TTuple ts -> TTuple (List.map (subst_params env) ts)
-  | TCon (n, ts) -> TCon (n, List.map (subst_params env) ts)
-  | _ -> t
+      (* a type alias expands to its target; the expansion is checked
+         (recursively, so alias chains resolve) and substituted *)
+      (match Hashtbl.find_opt st.tdecls n with
+      | Some (TDTypeAlias a) ->
+          let env = List.combine a.atparams ts in
+          check_ty st ~at (subst_params env a.aexpands)
+      | _ -> TCon (n, List.map (check_ty st ~at) ts))
 
 (* ---------------- target name validation ---------------- *)
 
@@ -1328,6 +1335,7 @@ let decl_pos (d : decl) : pos =
   match d with
   | DType (TDRecord r) -> r.rpos
   | DType (TDVariant v) -> v.vpos
+  | DType (TDTypeAlias a) -> a.apos
   | DFun f -> f.fpos
   | DClass c -> c.cpos
   | DClassType ct -> ct.ctpos
@@ -1758,6 +1766,14 @@ let check_type_decl st (td : type_decl) : type_decl =
           v.vctors
       in
       TDVariant { v with vctors = ctors' }
+  | TDTypeAlias a ->
+      (* the expansion is checked in a scope where the alias's own params
+         are bound to fresh unification variables, so `type 'a t = 'a
+         list` validates; the stored expansion keeps the source params *)
+      let args = List.map (fun _ -> fresh st) a.atparams in
+      let env = List.combine a.atparams (List.map (resolve st) args) in
+      let _ = check_ty st ~at:a.apos (subst_params env a.aexpands) in
+      TDTypeAlias a
 
 let check_program ~profile (p : Ast.program) =
   let types = Hashtbl.create 97
@@ -1821,7 +1837,10 @@ let check_program ~profile (p : Ast.program) =
       match d with
       | DType td ->
           let name =
-            match td with TDRecord r -> r.rname | TDVariant v -> v.vname
+            match td with
+            | TDRecord r -> r.rname
+            | TDVariant v -> v.vname
+            | TDTypeAlias a -> a.aname
           in
           check_target_name st ~at:dpos ~what:"type" name;
           register_tns dpos name;
@@ -1857,7 +1876,7 @@ let check_program ~profile (p : Ast.program) =
                          "name '%s' is already used by a type or class" cn);
                   Hashtbl.add st.ctors cn (v.vname, payload))
                 v.vctors
-          | TDRecord _ -> ())
+          | TDRecord _ | TDTypeAlias _ -> ())
       | DFun f ->
           check_target_name st ~at:dpos ~what:"function" f.fname;
           if Hashtbl.mem st.funcs f.fname then

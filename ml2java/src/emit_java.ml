@@ -1482,6 +1482,9 @@ let emit_decl st (d : decl) =
   match d with
   | DType (TDRecord r) -> emit_record st r
   | DType (TDVariant v) -> emit_variant st v
+  | DType (TDTypeAlias _) ->
+      (* aliases expand in the checker; nothing to emit *)
+      ()
   | DClassType ct -> emit_class_type st ct
   | DClass c -> emit_class st c
   | DFun f -> emit_fun st f

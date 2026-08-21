@@ -104,7 +104,7 @@ Raised with a clean one-line error, never silently mishandled:
 
 partial application and functions as values, modules and functors,
 exceptions, references, arrays, mixed `int`/`float` arithmetic, char
-arithmetic, named variant payload fields, type aliases, real class
+arithmetic, named variant payload fields, real class
 inheritance (`inherit` takes class types only), `open`, references
 named `unit` parameters (write `()` instead), `unit` inside
 list/option/tuple/type-argument positions, and `=` on `unit` values.

@@ -37,6 +37,7 @@ expression or return type, ...).
 | `string` | `string`. |
 | `unit` | `void` as a return type; the unit expression `()` is `null`. A `unit` parameter is dropped from the emitted signature (checker rule, same as Java). |
 | type param `'a` | `A` (uppercased: `'a` -> `A`, `'b` -> `B`, ...). Only type declarations are generic in v1; functions are monomorphic. |
+| `type t = ...` alias | expands in the checker; the emitted code sees only the expanded type (no `type t = ...` line). Generic aliases (`type 'a t = 'a list`) supported; `type t = int` is a plain `number` everywhere. |
 | `t list` | `t[]`. Generated code never mutates arrays. |
 | `t option` | `t \| null`; `None` = `null`, `Some x` = `x`. A nested option (`t option option`) cannot be erased — `Some None` and `None` would both be `null` — so when the element type is itself an option, the payload of `Some` is wrapped in a generated `_SomeBox<T>` object `{ tag: "_Some", v0: payload }` and the option type renders as `_SomeBox<render(t)> \| null`. |
 | tuple `t1 * t2` | fixed tuple `[t1, t2]`; construction `[a, b]`; `fst`/`snd` -> `v[0]` / `v[1]`. A tuple literal whose element types are NOT all identical is pinned into an annotated temp (`let _t0: [T1, T2] = [a, b];`): an inline mixed literal would widen to a union array (`(string \| number)[]`) and lose element types, breaking e.g. `fst (1, "x") + 3`. Homogeneous literals stay inline (they widen to `T[]`, which is safe in every position). |
@@ -149,7 +150,7 @@ stderr, exit 1. Checker runs before emission; no half-emitted file.
 
 Identical to ml2java v1's out-of-v1 list (partial application, functions as
 values, modules, functors, exceptions, arrays, char arithmetic,
-named variant payload fields, type aliases, class inheritance beyond interfaces, `open`,
+named variant payload fields, class inheritance beyond interfaces, `open`,
 references, `unit` inside composite types). The TS backend accepts exactly
 the surface the shared checker accepts for `Profile.ts` — nothing more,
 nothing less.

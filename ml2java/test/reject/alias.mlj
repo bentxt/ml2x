@@ -1,2 +1,0 @@
-type score = int
-let main () : unit = ()

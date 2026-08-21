@@ -101,6 +101,14 @@ and pattern =
 type type_decl =
   | TDRecord of record_decl
   | TDVariant of variant_decl
+  | TDTypeAlias of type_alias_decl
+
+and type_alias_decl = {
+  aname : string;
+  atparams : string list;                       (* 'a 'b -> ["a";"b"] *)
+  aexpands : typ;                               (* the aliased type *)
+  apos : pos;           (* `type` keyword *)
+}
 
 and record_decl = {
   rname : string;

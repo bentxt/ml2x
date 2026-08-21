@@ -80,7 +80,9 @@ pattern: must name exactly the record's fields, like a record literal).
 `t1 * t2`, user names (lowercase, like OCaml). Type params on decls:
 `'a tree ` / `'a point`.  Multi-argument type applications use the
 parenthesized OCaml form `(int, string) pair2` (juxtaposition `int string
-pair2` is not accepted in v1).
+pair2` is not accepted in v1).  `type t = ...` aliases expand in the
+checker (generic aliases `type 'a t = 'a list` included), so generated
+code never carries the alias name.
 
 ## Java mapping (emitter rules)
 
@@ -128,7 +130,7 @@ List.length    xs       -> xs.size()
 partial application, functions as values / `fun x -> e`, modules, functors,
 exceptions (`raise`, `try`), arrays, float-less `+.`-free mixes requiring
 promotion (int+float is an error, not auto-coerce, except literals? no: error),
-char arithmetic, named variant payload fields, type aliases,
+char arithmetic, named variant payload fields,
 class inheritance (`inherit` only takes class type names = interfaces),
 `open`, references (`ref`, `:=`, `!`), a named parameter of type `unit`
 (write `()`, which is dropped from the Java signature), and `unit` inside
