@@ -1,7 +1,7 @@
 (* One fixture covering the rest of the v1 surface: floats, while,
    for-range, mutable locals, cons, fst/snd, failwith, shadowing,
    option equality, string/char ordering, nested matches, generic
-   records, mutable records, guards, % , unary minus. *)
+   records, mutable records, guards, % / mod, unary minus. *)
 
 type 'a 'b pair2 = { pfst : 'a; psnd : 'b }
 
@@ -97,6 +97,8 @@ let main () : unit =
   print_endline (string_of_int (deep [9]));
   print_endline (string_of_int (deep []));
   print_endline (string_of_int (7 % 3));
+  print_endline (string_of_int (7 mod 3));
+  print_endline (string_of_int ((-7) mod 3));
   print_endline (string_of_int (-7));
   let v = mk_opt 3 in
   (match v with

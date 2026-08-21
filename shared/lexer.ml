@@ -6,8 +6,9 @@
    Float operators +. -. *. /. deliberately lex to the same tokens as
    + - * / (the AST has one binop set; the checker decides int vs float
    from operand types). `mod` and `downto` are NOT keywords per SPEC:
-   `%` is Mod, and `downto` surfaces as a plain identifier (the parser
-   recognizes it in for-ranges after `=`).
+   `%` is Mod, and `mod`/`downto` surface as plain identifiers (the
+   parser recognizes `mod` as the Mod operator and `downto` in
+   for-ranges after `=`).
 *)
 
 type t =

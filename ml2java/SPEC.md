@@ -51,7 +51,7 @@ literals, `x`, `(a, b)`, `[a; b]`, `x :: xs`, `{ x = e }`, `r.x`,
 `for i = lo to hi do body done`, `for i = lo downto hi do body done`,
 `-x`, `not x`, `(e : t)`.
 
-Operators: `+ - * / %` (int), `+. -. *. /.` (float), `= <> < <= > >=`,
+Operators: `+ - * / % mod` (int), `+. -. *. /.` (float), `= <> < <= > >=`,
 `&& ||`, `^` (string concat). Precedence: OCaml standard for these.
 Unary minus on literals and expressions. `not` prefix.
 

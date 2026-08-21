@@ -47,7 +47,8 @@ parameters there.
 Integer arithmetic, `bool` logic, `if/then/else` (an expression, as in
 OCaml), and function definitions with `let` all work as in OCaml.
 `int` is Java `long`, `float` is `double`, `bool` is `boolean`,
-`string` is `String`, `char` is `char`. `mod` is not available; use `%`.
+`string` is `String`, `char` is `char`. `mod` and `%` are both available
+for integer remainder.
 
 ## 3. Records
 

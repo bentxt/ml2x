@@ -42,6 +42,9 @@ let parse_program ~file src =
   let is_downto () =
     match peek () with Lexer.TIdent "downto" -> true | _ -> false
   in
+  let is_mod () =
+    match peek () with Lexer.TIdent "mod" -> true | _ -> false
+  in
   let advance () = incr pos in
   let error msg = Ast.raise_at ~file (peek_pos ()) msg in
   let mk p desc = incr uid; { Ast.id = !uid; desc; pos = p } in
@@ -388,6 +391,7 @@ let parse_program ~file src =
         | Lexer.TStar -> Some Ast.Mul
         | Lexer.TSlash -> Some Ast.Div
         | Lexer.TPercent -> Some Ast.Mod
+        | Lexer.TIdent "mod" -> Some Ast.Mod
         | _ -> None
       in
       match op with
@@ -436,7 +440,7 @@ let parse_program ~file src =
     match e.Ast.desc with Ast.ETuple es -> es | _ -> [ e ]
 
   and collect_args () =
-    if !in_for_low && is_downto () then []
+    if (!in_for_low && is_downto ()) || is_mod () then []
     else begin
       let a = parse_postfixed_atom () in
       if arg_start () then a :: collect_args () else [ a ]
@@ -491,7 +495,7 @@ let parse_program ~file src =
     | Lexer.TChar c -> advance (); mk p (Ast.EChar c)
     | Lexer.TBool b -> advance (); mk p (Ast.EBool b)
     | Lexer.TIdent "mod" ->
-        error "`mod` is not supported in v1 (SPEC); use `%`"
+        error "`mod` is an operator and cannot be used as a value"
     | Lexer.TIdent s -> advance (); mk p (Ast.EVar s)
     | Lexer.TUnderscore ->
         error "`_` is not a value expression (it is only a pattern)"

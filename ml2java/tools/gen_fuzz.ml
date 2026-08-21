@@ -107,6 +107,7 @@ let gen_program seed =
         "  let b1 = new boxed " ^ ri () ^ " () \"hey\" in";
         "  print_endline (b1 # label ());";
         "  print_endline (string_of_int (g0 + g1));";
+        "  print_endline (string_of_int (g0 mod 7));";
         "  print_endline (string_of_bool (r0 = r1));";
         "  print_endline (string_of_bool ([1; 2] = [1; 2]));";
         "  print_endline (string_of_bool (Some 1 = Some 1));";
