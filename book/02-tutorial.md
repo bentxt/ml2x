@@ -75,7 +75,7 @@ constructor. `match` compiles to an if/else `instanceof` chain, and the
 compiler checks exhaustiveness — you cannot forget a constructor:
 
 ```ocaml
-(* examples/tree.mljj *)
+(* examples/tree.mlj *)
 type btree =
   | Empty
   | Node of int * btree * btree

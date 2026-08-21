@@ -43,8 +43,10 @@ one-line error. `tsc` 5.9+ and Node 22+ are required.
 - `int` is `number`: values beyond ±2^53 lose precision (the shared
   `Lit.mlj` boundary fixture is Java-only).
 - `print_float`/`string_of_float` go through a generated `_fmt_float`
-  helper reproducing Java's `Double.toString` forms, so the shared `.out`
-  files pass.
+  helper reproducing Java's `Double.toString` forms (plain decimal for
+  10^-3 <= |x| < 10^7, `mantissaEexp` scientific outside it — JS's
+  thresholds and exponent spelling differ), so the shared `.out` files
+  pass.
 - Composite equality uses a generated deep-structural `_eq` (records,
   variants, lists, options, tuples, class instances); primitives use
   `===`/`!==`.

@@ -107,13 +107,18 @@ lane_a() { # seed
 # lane B worker: single-byte mutation of a fixture
 lane_m() { # seed
   seed=$1
-  src="test/$(ls test/*.mlj | sed -n "$((seed % 11 + 1))p" | xargs basename)"
+  n=$(ls test/*.mlj | wc -l | tr -d ' ')
+  [ "$n" -gt 0 ] || { echo "no-fixtures"; return 1; }
+  idx=$((seed % n + 1))
+  src=$(ls test/*.mlj | awk -v i="$idx" 'NR == i { print; exit }')
   cp "$src" "$TMP/m$seed.mlj"
+  size=$(wc -c < "$TMP/m$seed.mlj")
+  if [ "$size" -le 1 ]; then echo "empty-fixture"; return 0; fi
   # flip one byte at a deterministic position derived from the seed
-  pos=$((seed * 7 % $(wc -c < "$TMP/m$seed.mlj")))
-  byte=$(od -An -tu1 -j "$pos" -N1 "$TMP/m$seed.mlj" | tr -d ' ')
-  new=$(( (byte + 1 + seed) % 256 ))
-  printf "\\$(printf '%03o' "$new")" | dd of="$TMP/m$seed.mlj" bs=1 seek="$pos" conv=notrunc 2>/dev/null
+  pos=$((seed % size))
+  byte=$(((seed / 7) % 256))
+  printf '%b' "\\$(printf '%03o' "$byte")" |
+    dd of="$TMP/m$seed.mlj" bs=1 seek="$pos" conv=notrunc 2>/dev/null
   if ! r=$(check_sample "m$seed" "$TMP/m$seed.mlj"); then
     echo "seed $seed: $r"
     cp "$TMP/m$seed.mlj" "$ART/m$seed.mlj"

@@ -4,7 +4,7 @@ Source: `.mlj` files. OCaml-shaped syntax. One file = one Java compilation
 unit. The Java top-level class is the file basename unchanged; everything
 declared is nested `static` inside it.
 
-This file plus `src/ast.ml` is the binding contract for parser, checker, and
+This file plus `../shared/ast.ml` is the binding contract for parser, checker, and
 emitter. If the spec and the AST disagree, the AST wins. Unspecified behavior:
 pick the boring option and write the choice in a comment.
 

@@ -97,8 +97,14 @@ Emitted once at the top of the file, only when used:
   `Double.toString` forms, because JS `String(1.0)` is `"1"` but the
   shared fixtures expect `"1.0"`, `"-0.0"`, `"0.3333333333333333"`.
   `NaN` -> `"NaN"`, `Infinity` -> `"Infinity"`, `-Infinity` ->
-  `"-Infinity"`, `-0.0` -> `"-0.0"` (via `Object.is`), otherwise
-  `String(x)` with `".0"` appended when the text has no `.`/`e`/`E`.
+  `"-Infinity"`, `-0.0` -> `"-0.0"` (via `Object.is`).  For
+  10^-3 <= |x| < 10^7: `String(x)` with `".0"` appended when the text has
+  no `.`/`e`/`E`.  Outside that range Java prints scientific notation and
+  JS switches at different thresholds with different exponent spelling
+  (`1e+21` vs `1.0E21`), so the exponent form is rebuilt from
+  `toExponential()` (same shortest digits as `String`) into
+  `mantissaEexp` (`1.0E7`, `3.14E-5`, `1.5E21`, `-1.5E21`).  Verified
+  against Java's actual output by the shared `FloatPrint` fixture.
   This is a deliberate deviation from the naive `String(x)` mapping.
 - `declare const process: { stdout: { write(s: string): void } };` — typed
   shim for the Node `process` global, emitted when a process-using print

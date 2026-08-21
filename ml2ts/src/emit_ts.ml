@@ -1404,17 +1404,32 @@ let emit_somebox_helper st =
 
 let emit_fmt_float_helper st =
   (* JS String(1.0) is "1" but the shared fixtures expect "1.0", "-0.0",
-     "0.3333333333333333"; reproduce Java's Double.toString forms *)
+     "0.3333333333333333"; reproduce Java's Double.toString forms.
+     Java prints plain decimal for 10^-3 <= |x| < 10^7 and scientific
+     (`1.0E7`, `3.14E-5`, `1.5E21`) outside it; JS switches at different
+     thresholds and writes `1e+21` / `1e-7`, so the scientific range is
+     rebuilt from toExponential() (shortest round-trip, same digits as
+     String) into `mantissaEexp` with the sign stripped. *)
   line st "function _fmt_float(x: number): string {";
   with_indent st (fun () ->
       line st "if (Number.isNaN(x)) return \"NaN\";";
       line st "if (x === Infinity) return \"Infinity\";";
       line st "if (x === -Infinity) return \"-Infinity\";";
       line st "if (Object.is(x, -0)) return \"-0.0\";";
-      line st "const s = String(x);";
-      line st
-        "if (s.indexOf(\".\") >= 0 || s.indexOf(\"e\") >= 0 || s.indexOf(\"E\") >= 0) return s;";
-      line st "return s + \".0\";");
+      line st "const ax = Math.abs(x);";
+      line st "if (ax >= 0.001 && ax < 1e7) {";
+      with_indent st (fun () ->
+          line st "const s = String(x);";
+          line st
+            "if (s.indexOf(\".\") >= 0 || s.indexOf(\"e\") >= 0 || s.indexOf(\"E\") >= 0) return s;";
+          line st "return s + \".0\";");
+      line st "}";
+      line st "const s = x.toExponential();";
+      line st "const ei = s.indexOf(\"e\");";
+      line st "const mant = s.slice(0, ei);";
+      line st "const exp = parseInt(s.slice(ei + 1), 10);";
+      line st "const m2 = mant.indexOf(\".\") >= 0 ? mant : mant + \".0\";";
+      line st "return m2 + \"E\" + exp;");
   line st "}"
 
 let emit_process_helper st =

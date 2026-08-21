@@ -1,0 +1,24 @@
+(* Float printing boundaries: Java's Double.toString switches to
+   scientific notation outside 10^-3 .. 10^7, and the TS backend's
+   _fmt_float helper must reproduce the exact forms (the shared .out
+   files are Java's output).  Covers: standard-form integral values
+   (the ".0" suffix), values just inside and just outside the
+   scientific threshold, huge and tiny values, and division results. *)
+
+let main () : unit =
+  print_float 0.5; print_endline "";
+  print_float 100000.0; print_endline "";
+  print_float 9999999.0; print_endline "";
+  print_float 10000000.0; print_endline "";
+  print_float 12345678.0; print_endline "";
+  print_float 123.45; print_endline "";
+  print_float 0.001; print_endline "";
+  print_float 0.0001; print_endline "";
+  print_float 0.0000314; print_endline "";
+  print_float 0.000001; print_endline "";
+  print_float 0.0000001; print_endline "";
+  print_float 1500000000000000000000.0; print_endline "";
+  print_float (-1500000000000000000000.0); print_endline "";
+  print_float (1.0 /. 3.0); print_endline "";
+  print_float (2.0 /. 3.0); print_endline "";
+  print_float (1.0 /. 10000000.0); print_endline ""

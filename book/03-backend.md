@@ -6,7 +6,7 @@ that have a direct, predictable Java representation are accepted; everything
 else is rejected with a single-line error.
 
 The language contract is [`SPEC.md`](SPEC.md). If the README and SPEC
-disagree, SPEC and `src/ast.ml` win. New to the language? Start with
+disagree, SPEC and `../shared/ast.ml` win. New to the language? Start with
 [`TUTORIAL.md`](TUTORIAL.md) — it walks through every feature with the
 runnable `examples/` files.
 
@@ -35,29 +35,31 @@ and the exit code is 1. If an error occurs, no output file is written.
 
 ## How the compiler is put together
 
-Four phases, all single-file modules under `src/`:
+The shared frontend plus one emitter:
 
 ```text
 .mlj source
-  -> lexer.ml / parser.ml        (hand-written; parser emits ast.ml nodes)
-  -> check.ml                    (semantic validation + type table)
-  -> emit_java.ml                (checked AST -> Java text)
+  -> ../shared/lexer.ml / ../shared/parser.ml   (hand-written; parser emits ast.ml nodes)
+  -> ../shared/check.ml                         (semantic validation + type table)
+  -> src/emit_java.ml                           (checked AST -> Java text)
   -> .java source
 ```
 
-- `src/ast.ml` is the contract module: every node the parser, checker, and
-  emitter agree on lives here.
-- `src/check.ml` fills a table mapping every expression node to its type,
-  which the emitter uses for equality choice (`==` vs `.equals`), record
-  field accessors, and match lowering. It also enforces the v1 profile:
-  full application only, mutability rules, exhaustiveness of matches,
-  interface completeness, private/static access rules.
+- `../shared/ast.ml` is the contract module: every node the parser,
+  checker, and emitters agree on lives here. The frontend is shared with
+  the ml2ts backend — `shared/profile.ml` parameterizes the checker per
+  target, and no per-target fork of the frontend exists.
+- `../shared/check.ml` fills a table mapping every expression node to its
+  type, which the emitter uses for equality choice (`==` vs `.equals`),
+  record field accessors, and match lowering. It also enforces the v1
+  profile: full application only, mutability rules, exhaustiveness of
+  matches, interface completeness, private/static access rules.
 - `src/emit_java.ml` follows SPEC's "Java mapping" rules and emits idiomatic
   modern Java: records, sealed interfaces, `var`-free but simple code with
   no runtime emulation beyond three tiny helpers.
 
-The CLI is `bin/ml2java.ml`; `src/pipeline.ml` wires the phases and converts
-front-end exceptions into the standard error line.
+The CLI is `bin/ml2java.ml`; `../shared/pipeline.ml` wires the phases and
+converts front-end exceptions into the standard error line.
 
 ## What the generated Java looks like
 
@@ -208,8 +210,11 @@ proofs plus unit-materialization), `Lit` (literal and UTF-8 edge cases),
 methods), and `NewUnit` (class constructors with `()` parameters and
 unit-typed call arguments), `GuardChain` (guarded matches compile to
 linear-size labeled blocks), `MixedRec` (field reads on records that
-mix mutable and immutable fields), and `GenPoll` (back-to-back generic
-functions keep independent type variables).  Twelve examples under `examples/` are compiled and run the same
+mix mutable and immutable fields), `GenPoll` (back-to-back generic
+functions keep independent type variables), and `FloatPrint` (float
+printing boundaries: Java's `Double.toString` switches to scientific
+notation outside 10^-3 .. 10^7, and both backends must print the exact
+same forms).  Twelve examples under `examples/` are compiled and run the same
 way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
 `operators`, `tuples`, `generics`, `tree`, `formatting`, and
 `fizzbuzz`.
@@ -219,12 +224,8 @@ way: `hello`, `counters`, `validate`, `lists`, `options`, `shapes`,
 ```text
 SPEC.md            the language + mapping contract
 bin/ml2java.ml     CLI
-src/ast.ml         shared AST (contract module)
-src/lexer.ml       tokenizer
-src/parser.ml      recursive-descent parser
-src/check.ml       semantic checker and type table
 src/emit_java.ml   Java source emitter
-src/pipeline.ml    phase wiring
+../shared/         shared AST, lexer, parser, checker, profiles
 test/*.mlj         positive fixtures (compile, javac -Werror, run, diff vs *.out)
 test/reject/*.mlj  fixtures that must fail (located error contains *.err text)
 examples/*.mlj     example programs, gated exactly like test fixtures
