@@ -1,8 +1,9 @@
-let compile ~profile ~file src =
+(* Shared front-end driver. Each backend passes its profile and emitter. *)
+let compile ~profile ~emit ~file src =
   try
     let p = Parser.parse_program ~file src in
     let p, tables = Check.check_program ~profile p in
-    Ok (Emit_java.emit_program (p, tables))
+    Ok (emit (p, tables))
   with
   | Ast.Front_error msg -> Error msg
   | exn ->

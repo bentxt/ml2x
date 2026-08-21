@@ -113,7 +113,8 @@ let () =
       exit 2
   in
   let src = read_input input in
-  match Ml2java_lib.Pipeline.compile ~profile:Ml2java_lib.Profile.java
+  match Pipeline.compile ~profile:Profile.java
+          ~emit:Ml2java_lib.Emit_java.emit_program
           ~file:(Filename.basename input) src
   with
   | Ok java -> write_output output java

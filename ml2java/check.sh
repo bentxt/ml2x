@@ -9,7 +9,7 @@
 set -u
 cd "$(dirname "$0")"
 
-EXE=_build/default/bin/ml2java.exe
+EXE=../_build/default/ml2java/bin/ml2java.exe
 TMP="${TMPDIR:-/tmp}/ml2java-check-$$"
 rm -rf "$TMP"
 mkdir -p "$TMP/classes"

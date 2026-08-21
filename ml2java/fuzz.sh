@@ -32,8 +32,8 @@ esac
 if [ "$N" -eq 0 ]; then echo "fuzz: skipped (FUZZ_N=0)"; exit 0; fi
 if [ "$N" -lt 10 ]; then echo "fuzz: FUZZ_N must be at least 10 (got $N)" >&2; exit 2; fi
 
-EXE=_build/default/bin/ml2java.exe
-GEN=_build/default/tools/gen_fuzz.exe
+EXE=../_build/default/ml2java/bin/ml2java.exe
+GEN=../_build/default/ml2java/tools/gen_fuzz.exe
 TMP="${TMPDIR:-/tmp}/ml2java-fuzz-$$"
 ART="fuzz-artifacts-$$"              # counterexample evidence, kept on failure
 mkdir -p "$TMP/classes" "$TMP/det2" "$ART"

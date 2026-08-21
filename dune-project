@@ -1,3 +1,3 @@
 (lang dune 3.20)
 
-(name ml2java)
+(name ml2x)

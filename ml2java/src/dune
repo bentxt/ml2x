@@ -1,3 +1,4 @@
 (library
  (name ml2java_lib)
- (modules ast lexer parser check emit_java pipeline profile))
+ (modules emit_java)
+ (libraries ml2x_shared))
