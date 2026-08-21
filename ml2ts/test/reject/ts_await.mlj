@@ -1,0 +1,3 @@
+let await = 5
+
+let main () : unit = print_int await

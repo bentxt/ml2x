@@ -1,0 +1,6 @@
+class c (x : int) =
+  object (self)
+    method m () : int = x
+  end
+let main () : unit =
+  print_int (c.m ())

@@ -1,0 +1,4 @@
+(* duplicate top-level function names must be a located error *)
+let f (x : int) : int = x
+let f (x : int) : int = x + 1
+let main () : unit = print_endline (string_of_int (f 1))

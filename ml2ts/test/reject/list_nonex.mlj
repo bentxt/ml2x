@@ -1,0 +1,4 @@
+let f (xs : int list) : int =
+  match xs with
+  | x :: rest -> x
+let main () : unit = ()

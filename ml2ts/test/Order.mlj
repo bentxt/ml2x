@@ -1,0 +1,91 @@
+(* Evaluation order: strictly left-to-right for operator operands, call
+   arguments, list/tuple/record elements, cons operands, and string
+   concatenation.  Every probe below uses a mutable digit-accumulator so a
+   wrong order changes the digits (and the printed results).  Also locks in
+   the unit-materialization fixes: a unit-typed call argument's side effect
+   must survive, and a unit-typed if/else expression materialized through a
+   type annotation must keep printing. *)
+
+type cnt = { mutable n : int }
+
+let mk () : cnt = { n = 0 }
+
+(* append digit k: n becomes n*10+k; returns the new value *)
+let bump (c : cnt) (k : int) : int = c.n <- c.n * 10 + k; c.n
+
+(* append digit k; returns unit *)
+let poke (c : cnt) (k : int) : unit = c.n <- c.n * 10 + k
+
+let take () (k : int) : int = k
+
+let add (a : int) (b : int) : int = a + b
+
+type pair = { a : int; b : int }
+
+let main () : unit =
+  (* call arguments: left to right *)
+  let c = mk () in
+  print_endline (string_of_int (add (bump c 1) (bump c 2)));
+  print_endline (string_of_int c.n);
+  (* a UNIT-TYPED call argument: its effect runs at its source position and
+     survives even though Java receives no argument for it *)
+  let c = mk () in
+  print_endline (string_of_int (take (poke c 9) (bump c 1)));
+  print_endline (string_of_int c.n);
+  (* unit-materialization regression: a unit expression built from
+     if/failwith must not be dropped *)
+  let _ = ((if false then failwith "x" else ()) : unit) in
+  print_endline "survived";
+  (* record literal fields written in a DIFFERENT order than declared *)
+  let c = mk () in
+  let p = { b = bump c 2; a = bump c 1 } in
+  print_endline (string_of_int p.a);
+  print_endline (string_of_int p.b);
+  print_endline (string_of_int c.n);
+  (* list literal elements: left to right *)
+  let c = mk () in
+  print_endline (string_of_int (List.length [bump c 1; bump c 2]));
+  print_endline (string_of_int c.n);
+  (* tuple literal elements: left to right *)
+  let c = mk () in
+  let (x, y) = (bump c 1, bump c 2) in
+  print_endline (string_of_int x);
+  print_endline (string_of_int y);
+  print_endline (string_of_int c.n);
+  (* cons: head before tail *)
+  let c = mk () in
+  let xs = bump c 1 :: [bump c 2] in
+  print_endline (string_of_int (List.length xs));
+  print_endline (string_of_int c.n);
+  (* string concat: left operand before right *)
+  let c = mk () in
+  print_endline (string_of_int (bump c 1) ^ string_of_int (bump c 2));
+  print_endline (string_of_int c.n);
+  (* && and || chains evaluate left to right while short-circuiting *)
+  let c = mk () in
+  print_endline (string_of_bool ((bump c 1) > 0 && (bump c 2) > 0));
+  print_endline (string_of_bool ((bump c 3) < 0 && (bump c 4) > 0));
+  print_endline (string_of_bool ((bump c 5) > 0 || (bump c 6) > 0));
+  print_endline (string_of_bool ((bump c 7) < 0 || (bump c 8) > 0));
+  print_endline (string_of_int c.n);
+  (* binop operands: a statement-bearing RIGHT operand must not run before
+     the left operand's inline call.  Regression: the right operand's
+     statements were emitted before the consuming line executed the left
+     call, so `bump c 1 ^ begin poke c 2; ... end` produced 21R instead of
+     1R.  One probe per operator family: concat, arithmetic, equality, and
+     ordering. *)
+  let c = mk () in
+  print_endline (string_of_int (bump c 1) ^ (begin poke c 2; "R" end));
+  print_endline (string_of_int c.n);
+  let c = mk () in
+  print_endline (string_of_int ((bump c 1) + (begin poke c 2; 5 end)));
+  print_endline (string_of_int c.n);
+  let c = mk () in
+  print_endline (string_of_int ((bump c 1) * (begin poke c 2; 3 end)));
+  print_endline (string_of_int c.n);
+  let c = mk () in
+  print_endline (string_of_bool ((bump c 1) = (begin poke c 2; 12 end)));
+  print_endline (string_of_int c.n);
+  let c = mk () in
+  print_endline (string_of_bool ((bump c 1) < (begin poke c 2; 12 end)));
+  print_endline (string_of_int c.n)

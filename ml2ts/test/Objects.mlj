@@ -1,0 +1,45 @@
+(* Java-facing OO: class type -> interface, class -> Java class,
+   ctor params, mutable fields, private/static methods, self calls,
+   interface implementation, method calls, new. *)
+
+class type printable = object
+  method to_string () : string
+end
+
+class greeter (prefix : string) =
+  object (self)
+    inherit printable
+    val mutable count = 0
+    method private bump () : unit = count <- count + 1
+    method greet (name : string) : string =
+      self # bump ();
+      prefix ^ " " ^ name
+    method to_string () : string =
+      "greeter(count=" ^ string_of_int count ^ ")"
+    method get_count () : int = count
+    method static make (p : string) : greeter = new greeter p
+  end
+
+class counter (start : int) =
+  object (self)
+    val mutable n = start
+    method incr () : unit = n <- n + 1
+    method add (k : int) : unit =
+      let _ = self in
+      n <- n + k
+    method value () : int = n
+  end
+
+let main () : unit =
+  let g = new greeter "hi" in
+  print_endline (g # greet "ben");
+  print_endline (g # greet "sir");
+  print_endline (g # to_string ());
+  let p : printable = (g : printable) in
+  print_endline (p # to_string ());
+  let g2 = greeter.make "yo" in
+  print_endline (g2 # greet "x");
+  let c = new counter 10 in
+  c # incr ();
+  c # add 5;
+  print_endline (string_of_int (c # value ()))

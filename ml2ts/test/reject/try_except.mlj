@@ -1,0 +1,2 @@
+let main () : unit =
+  try print_endline "x" with _ -> print_endline "y"

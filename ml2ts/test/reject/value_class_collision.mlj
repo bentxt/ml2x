@@ -1,0 +1,5 @@
+let f (x : int) : int = x
+
+class f =
+  object (self)
+  end

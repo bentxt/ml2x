@@ -1,0 +1,7 @@
+(* partial application must be rejected *)
+
+let add (x : int) (y : int) : int = x + y
+
+let inc = add 1
+
+let main () : unit = print_int inc

@@ -1,0 +1,9 @@
+(* non-exhaustive variant match without wildcard must be rejected *)
+
+type shape = Circle of int | Dot
+
+let area (s : shape) : int =
+  match s with
+  | Circle r -> 3 * r * r
+
+let main () : unit = print_int (area Dot)

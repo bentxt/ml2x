@@ -1,0 +1,4 @@
+(library
+ (name ml2ts_lib)
+ (modules emit_ts)
+ (libraries ml2x_shared))

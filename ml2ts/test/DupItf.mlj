@@ -1,0 +1,29 @@
+(* Two class types declaring the SAME method with IDENTICAL signatures:
+   the class implements both with a single shared method (the checker
+   permits compatible duplicates across inherited interfaces). *)
+
+class type drawable =
+  object
+    method describe () : string
+  end
+
+class type labeled =
+  object
+    method describe () : string
+  end
+
+class thing =
+  object (self)
+    inherit drawable
+    inherit labeled
+    val name = "gadget"
+    method describe () : string = "thing: " ^ name
+  end
+
+let main () : unit =
+  let t = new thing in
+  print_endline (t # describe ());
+  let d : drawable = (t : drawable) in
+  print_endline (d # describe ());
+  let l : labeled = (t : labeled) in
+  print_endline (l # describe ())

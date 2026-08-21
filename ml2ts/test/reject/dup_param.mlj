@@ -1,0 +1,4 @@
+(* both parameters are emitted verbatim; Java rejects a duplicate *)
+let f (x : int) (x : int) : int = x
+
+let main () : unit = print_int (f 1 2)

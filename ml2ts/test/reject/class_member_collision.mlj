@@ -1,0 +1,4 @@
+class c (x : int) =
+  object (self)
+    method x () : int = x
+  end

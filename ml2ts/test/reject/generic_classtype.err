@@ -1,0 +1,1 @@
+class type method 'g' uses type variable 'a'; class type signatures must be monomorphic in v1

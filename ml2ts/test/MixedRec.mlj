@@ -1,0 +1,39 @@
+(* Mixed-mutability record: any mutable field lowers the record to a final
+   class with public fields, so field READS of the immutable fields too are
+   direct field access; a pure record stays a Java record with accessor
+   calls.  Equality between mixed records goes through the generated
+   equals. *)
+
+type flow = { m_imm_int : int; m_imm_str : string; mutable m_mut : int }
+
+type pure = { p_imm_int : int; p_imm_str : string }
+
+let mk_mixed (n : int) (s : string) (m : int) : flow =
+  { m_imm_int = n; m_imm_str = s; m_mut = m }
+
+let read_mixed (r : flow) : int = r.m_imm_int + r.m_mut
+
+let bump (r : flow) : unit = r.m_mut <- r.m_mut + 1
+
+let mk_pure (n : int) (s : string) : pure = { p_imm_int = n; p_imm_str = s }
+
+let main () : unit =
+  let r = mk_mixed 1 "one" 10 in
+  (* reads of the immutable fields of a mixed record: direct field access *)
+  print_endline (string_of_int r.m_imm_int);
+  print_endline r.m_imm_str;
+  print_endline (string_of_int (read_mixed r));
+  bump r;
+  print_endline (string_of_int r.m_mut);
+  print_endline (string_of_int r.m_imm_int);
+  (* equality between mixed records uses the generated structural equals *)
+  let r2 = mk_mixed 1 "one" 11 in
+  print_endline (string_of_bool (r = r2));
+  let r3 = mk_mixed 1 "one" 12 in
+  print_endline (string_of_bool (r = r3));
+  (* pure record control: accessor reads still hold *)
+  let p = mk_pure 7 "seven" in
+  print_endline (string_of_int p.p_imm_int);
+  print_endline p.p_imm_str;
+  let p2 = mk_pure 7 "seven" in
+  print_endline (string_of_bool (p = p2))

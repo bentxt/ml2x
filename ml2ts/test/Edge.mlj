@@ -1,0 +1,35 @@
+(* Boundary cases from the 2026-08 end-to-end assessment.  Each construct
+   here was accepted but either miscompiled (wrong result, wrong evaluation
+   order) or emitted Java that javac rejects.  These now must stay correct. *)
+
+(* generic function: one shared type variable across parameter and result *)
+let id (x : 'a) : 'a = x
+
+(* statement-bearing top-level value: needs a static initializer in Java *)
+let answer = if true then 40 + 2 else 0
+
+(* nested options: Some None must stay distinct from None *)
+let describe (x : int option option) : string =
+  match x with
+  | Some (Some n) -> "some some " ^ string_of_int n
+  | Some None -> "some none"
+  | None -> "none"
+
+let main () : unit =
+  print_endline (string_of_int (id 3 + 1));
+  print_endline (id "poly");
+  print_endline (string_of_int answer);
+  print_endline (describe (Some None));
+  print_endline (describe None);
+  print_endline (describe (Some (Some 7)));
+  let mutable touched = 0 in
+  (* short-circuit: the right side must not run *)
+  let _ = (false && (touched <- 1; true)) in
+  let _ = (true || (touched <- 1; true)) in
+  print_endline (string_of_int touched);
+  (* a statement-bearing while condition re-evaluates on every iteration *)
+  let mutable i = 0 in
+  while (i <- i + 1; i < 3) do
+    print_int i
+  done;
+  print_endline ""

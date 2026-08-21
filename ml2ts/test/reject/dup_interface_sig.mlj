@@ -1,0 +1,16 @@
+class type named =
+  object
+    method label () : string
+  end
+
+class type counted =
+  object
+    method label () : int
+  end
+
+class both =
+  object (self)
+    inherit named
+    inherit counted
+    method label () : string = "label"
+  end

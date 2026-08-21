@@ -1,0 +1,5 @@
+let f (x : int) : int =
+  let y = 1 in
+  y <- 2;
+  y
+let main () : unit = ()

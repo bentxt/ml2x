@@ -1,0 +1,3 @@
+(executable
+ (name ml2ts)
+ (libraries ml2ts_lib ml2x_shared))

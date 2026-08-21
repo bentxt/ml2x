@@ -1,0 +1,2 @@
+let bad (xs : int array) : int = 0
+let main () : unit = ()

@@ -1557,6 +1557,28 @@ let check_class st (c : class_decl) : class_decl =
       errp st m.mpos
         (Printf.sprintf "duplicate method '%s' in class '%s'" n c.cname)
   | None -> ());
+  (* TS: methods and fields/ctor params share one member namespace (a
+     field and a method of the same name are a duplicate-identifier error
+     in TS, unlike Java where they are separate namespaces). *)
+  let () =
+    if st.profile.class_member_namespace then
+      let members =
+        List.map fst (List.filter (fun (_, t) -> t <> TUnit) params)
+        @ List.map (fun cf -> cf.cfname) c.cfields
+      in
+      (match
+         List.find_opt
+           (fun (m : method_decl) -> List.mem m.mname members)
+           c.cmethods
+       with
+      | Some m ->
+          errp st m.mpos
+            (Printf.sprintf
+               "method '%s' of class '%s' collides with a field or constructor \
+                parameter of the same name"
+               m.mname c.cname)
+      | None -> ())
+  in
   (* field initializers see the constructor parameters *)
   let param_env =
     List.fold_left
@@ -1717,7 +1739,7 @@ let check_program ~profile (p : Ast.program) =
     }
   in
   let top_class = Filename.remove_extension (Filename.basename p.file) in
-  check_top_class_name st top_class;
+  if st.profile.check_basename then check_top_class_name st top_class;
   (* Names that become classes inside the generated file (the top-level
      class = file basename, records, variant interfaces, per-constructor
      records, classes, class types) share one namespace on disk.  On the
@@ -1794,6 +1816,16 @@ let check_program ~profile (p : Ast.program) =
           check_target_name st ~at:dpos ~what:"function" f.fname;
           if Hashtbl.mem st.funcs f.fname then
             errp st dpos (Printf.sprintf "duplicate function '%s'" f.fname);
+          (* TS: a class and a top-level function/value share one value
+             namespace (a class declaration is a value in TS, unlike Java
+             where types and methods are separate namespaces) *)
+          if
+            st.profile.value_class_namespace
+            && Hashtbl.mem st.classes f.fname
+          then
+            errp st dpos
+              (Printf.sprintf
+                 "function '%s' collides with a class of the same name" f.fname);
           Hashtbl.add st.funcs f.fname f
       | DClass c ->
           check_target_name st ~at:dpos ~what:"class" c.cname;
@@ -1810,6 +1842,17 @@ let check_program ~profile (p : Ast.program) =
           if Hashtbl.mem st.ctors c.cname then
             errp st dpos
               (Printf.sprintf "name '%s' is already used by a constructor"
+                 c.cname);
+          (* TS: a class and a top-level function/value share one value
+             namespace *)
+          if
+            st.profile.value_class_namespace
+            && Hashtbl.mem st.funcs c.cname
+          then
+            errp st dpos
+              (Printf.sprintf
+                 "class '%s' collides with a function or value of the same \
+                  name"
                  c.cname);
           Hashtbl.add st.classes c.cname c
       | DClassType ct ->

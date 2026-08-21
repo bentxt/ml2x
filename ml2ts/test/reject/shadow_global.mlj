@@ -1,0 +1,10 @@
+let g = 10
+
+class c () =
+  object
+    val g = 1
+    val h = g
+    method get () : int = h
+  end
+
+let main () : unit = ()

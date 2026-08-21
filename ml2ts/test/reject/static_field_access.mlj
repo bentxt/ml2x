@@ -1,0 +1,9 @@
+(* a static method has no instance: reading a field is a source error,
+   not a `this.value` that javac rejects *)
+class counter () =
+  object
+    val mutable value = 0
+    method static bad () : int = value
+  end
+
+let main () : unit = print_endline "ok"

@@ -1,0 +1,104 @@
+(* One fixture covering the rest of the v1 surface: floats, while,
+   for-range, mutable locals, cons, fst/snd, failwith, shadowing,
+   option equality, string/char ordering, nested matches, generic
+   records, mutable records, guards, % , unary minus. *)
+
+type 'a 'b pair2 = { pfst : 'a; psnd : 'b }
+
+type box = { mutable a : int; b : string }
+
+type 'a tree = Leaf | Node of 'a tree * 'a
+
+type t = A of int | B
+
+let area (r : float) : float = 3.14 *. r *. r
+let fst_of (p : int * string) : int = fst p
+let snd_of (p : int * string) : string = snd p
+
+let cto (n : int) : int =
+  let mutable k = 0 in
+  let mutable acc = 0 in
+  while k < n do
+    acc <- acc + k;
+    k <- k + 1
+  done;
+  acc
+
+let fail_bad (n : int) : int = if n < 0 then failwith "neg" else n
+let cons2 (x : int) (xs : int list) : int list = x :: xs
+
+let sum_to (n : int) : int =
+  let mutable acc = 0 in
+  for i = 1 to n do
+    acc <- acc + i
+  done;
+  acc
+
+let classify (x : t) : string =
+  match x with
+  | A n -> (match n with 0 -> "zero" | _ -> "pos")
+  | B -> "bee"
+
+let tree_sum (t : int tree) : int =
+  match t with
+  | Leaf -> 0
+  | Node (l, v) -> tree_sum l + v
+
+let mk_pair (a : int) (b : string) : (int, string) pair2 = { pfst = a; psnd = b }
+let mk_box (n : int) (s : string) : box = { a = n; b = s }
+let opt_eq (a : int option) (b : int option) : bool = a = b
+let mk_opt (n : int) : int option = if n = 0 then None else Some (n * 2)
+
+let rec deep (xs : int list) : int =
+  match xs with
+  | 1 :: 2 :: rest -> 10 + List.length rest
+  | x :: rest -> x
+  | [] -> -1
+
+let main () : unit =
+  print_float (area 2.0);
+  print_endline "";
+  print_endline (string_of_float (area 2.0));
+  print_endline (string_of_int (fst_of (1, "x")));
+  print_endline (snd_of (2, "y"));
+  print_endline (string_of_int (cto 5));
+  print_endline (string_of_int (fail_bad 3));
+  print_endline (string_of_int (List.length (cons2 1 [2; 3])));
+  print_endline (string_of_int (sum_to 4));
+  let x = 1 in
+  let x = x + 1 in
+  print_endline (string_of_int x);
+  print_endline (string_of_bool (1.5 = 1.5));
+  print_endline (string_of_bool (1.5 < 2.5));
+  print_endline (string_of_bool (2.5 >= 2.5));
+  print_endline (string_of_bool ('a' < 'b'));
+  print_endline (string_of_bool ('a' = 'a'));
+  print_endline (classify (A 0));
+  print_endline (classify (A 9));
+  print_endline (classify B);
+  print_endline (string_of_int (tree_sum (Node (Node (Leaf, 1), 2))));
+  let p = mk_pair 3 "three" in
+  print_endline (string_of_int p.pfst);
+  print_endline p.psnd;
+  let bx = mk_box 1 "x" in
+  let by = mk_box 1 "x" in
+  let bz = mk_box 2 "x" in
+  print_endline (string_of_bool (bx = by));
+  print_endline (string_of_bool (bx = bz));
+  bx.a <- 5;
+  print_endline (string_of_int bx.a);
+  print_endline (string_of_bool (opt_eq None None));
+  print_endline (string_of_bool (opt_eq None (Some 5)));
+  print_endline (string_of_bool (opt_eq (Some 5) None));
+  print_endline (string_of_bool (opt_eq (Some 5) (Some 5)));
+  print_endline (string_of_bool ("a" < "b"));
+  print_endline (string_of_bool ("a" = "a"));
+  print_endline (string_of_int (deep [1; 2; 3]));
+  print_endline (string_of_int (deep [9]));
+  print_endline (string_of_int (deep []));
+  print_endline (string_of_int (7 % 3));
+  print_endline (string_of_int (-7));
+  let v = mk_opt 3 in
+  (match v with
+   | Some x -> print_endline (string_of_int x)
+   | None -> print_endline "none")

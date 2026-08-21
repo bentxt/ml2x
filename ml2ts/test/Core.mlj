@@ -1,0 +1,88 @@
+(* Portable subset: records, variants, match, tuples, option, lists,
+   functions, generics, mutable locals, loops. *)
+
+type pos = { x : int; y : int }
+
+type shape = Circle of int | Rect of pos * pos | Dot
+
+type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree
+
+type dim = { mutable w : int; h : int }
+
+let origin = { x = 0; y = 0 }
+
+let distance2 (a : pos) (b : pos) : int =
+  let dx = b.x - a.x in
+  let dy = b.y - a.y in
+  dx * dx + dy * dy
+
+let rec area (s : shape) : int =
+  match s with
+  | Circle r -> 3 * r * r
+  | Rect (p1, p2) -> (p2.x - p1.x) * (p2.y - p1.y)
+  | Dot -> 0
+
+let describe (s : shape) : string =
+  match s with
+  | Circle r when r > 10 -> "big circle"
+  | Circle _ -> "circle"
+  | Rect _ -> "rect"
+  | Dot -> "dot"
+
+let rec sum_tree (t : int tree) : int =
+  match t with
+  | Leaf -> 0
+  | Node (l, v, r) -> sum_tree l + v + sum_tree r
+
+let swap (p : int * string) : string * int =
+  let (a, b) = p in
+  (b, a)
+
+let head_or (d : int) (xs : int list) : int =
+  match xs with
+  | [] -> d
+  | x :: _ -> x
+
+let greet (name : string option) : string =
+  match name with
+  | Some n -> "hello " ^ n
+  | None -> "hello stranger"
+
+let same (a : pos) (b : pos) : bool = a = b
+
+let total (xs : int list) : int =
+  let mutable acc = 0 in
+  for i in xs do
+    acc <- acc + i
+  done;
+  acc
+
+let rec countdown (n : int) : unit =
+  if n <= 0 then print_endline "done"
+  else begin
+    print_int n;
+    print_endline "";
+    countdown (n - 1)
+  end
+
+let bump (d : dim) : unit = d.w <- d.w + 1
+
+let main () : unit =
+  let p = { x = 3; y = 4 } in
+  print_endline (string_of_int (distance2 origin p));
+  print_endline (string_of_int (area (Circle 2)));
+  print_endline (string_of_int (area (Rect (origin, p))));
+  print_endline (describe (Circle 20));
+  print_endline (string_of_int (sum_tree (Node (Leaf, 1, Node (Leaf, 2, Leaf)))));
+  let (s, n) = swap (7, "seven") in
+  print_endline (s ^ string_of_int n);
+  print_endline (string_of_int (head_or 42 []));
+  print_endline (string_of_int (head_or 42 [9; 8]));
+  print_endline (greet (Some "ml"));
+  print_endline (greet None);
+  print_endline (string_of_bool (same origin { x = 0; y = 1 }));
+  print_endline (string_of_int (total [1; 2; 3; 4]));
+  let d = { w = 1; h = 2 } in
+  bump d;
+  print_endline (string_of_int d.w);
+  print_endline (string_of_int (List.length [7; 8; 9; 10]))

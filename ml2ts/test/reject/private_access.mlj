@@ -1,0 +1,12 @@
+(* calling a private method from outside the class must be rejected *)
+
+class box (v : int) =
+  object
+    val mutable n = v
+    method private secret () : int = n
+    method show () : int = n
+  end
+
+let main () : unit =
+  let b = new box 1 in
+  print_int (b # secret ())
