@@ -607,16 +607,17 @@ let parse_program ~file src =
         in_for_low := true;
         let lo = parse_expr () in
         in_for_low := false;
-        (match peek () with
-        | Lexer.TKey "to" -> advance ()
-        | Lexer.TIdent "downto" ->
-            error "`downto` loops are not supported in v1 (SPEC)"
-        | _ -> error "expected `to` in the for range");
+        let up =
+          match peek () with
+          | Lexer.TKey "to" -> advance (); true
+          | Lexer.TIdent "downto" -> advance (); false
+          | _ -> error "expected `to` or `downto` in the for range"
+        in
         let hi = parse_expr () in
         expect_tok (Lexer.TKey "do") "expected `do` in the for range";
         let body = parse_expr () in
         expect_tok (Lexer.TKey "done") "expected `done` after the for body";
-        mk p (Ast.EForRange (name, lo, hi, body))
+        mk p (Ast.EForRange (name, up, lo, hi, body))
     | _ -> error "expected `in` or `=` after the for-loop variable"
 
   and parse_match () =

@@ -141,8 +141,8 @@ Non-ASCII text in string literals passes through as UTF-8.
 ```
 
 - `let mutable x = 0` is a mutable local; `x <- x + 1` updates it.
-- `for i = 1 to n do ... done` is a counting loop (`downto` is not
-  in the subset).
+- `for i = 1 to n do ... done` is a counting loop; `for i = n downto 1`
+  counts downward.
 - `while cond do ... done` re-evaluates its condition each iteration,
   even when the condition contains statements.
 - Classes map to nested `static final class`es: constructor parameters

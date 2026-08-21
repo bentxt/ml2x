@@ -70,6 +70,7 @@ expression or return type, ...).
 | `while c do body done` | `while (c) { body }` (or the re-evaluated form above when the condition carries statements). |
 | `for x in xs do body done` | `for (const x of xs) { body }` (TS forbids a type annotation on a for-of variable; the element type is inferred from the list's type). |
 | `for i = lo to hi do body done` | `for (let i = lo; i <= hi; i++) { body }`. |
+| `for i = lo downto hi do body done` | `for (let i = lo; i >= hi; i--) { body }`. |
 | class `class c (p : t) = object (self) ... end` | `class c implements itf { private readonly p: t; ... constructor(p: t) { this.p = p; } ... }`. Constructor parameters become `private readonly` fields (non-readonly when mutable); `val` fields stay `private` (readonly unless mutable); methods map to methods; `method private` -> `private`; `method static` -> `static`; `inherit itf` -> `implements itf` (all interface methods must exist — checker rule). |
 | `self` / bare field name inside a method | `this` / `this.f` (the checker rewrites bare field references to `ESelfField`). |
 | static methods | have no instance: `self` and bare field/constructor-parameter names are checker errors inside them, so `this` never appears in a static context. |
@@ -147,7 +148,7 @@ stderr, exit 1. Checker runs before emission; no half-emitted file.
 ## Out of v1
 
 Identical to ml2java v1's out-of-v1 list (partial application, functions as
-values, modules, functors, exceptions, arrays, char arithmetic, `downto`,
+values, modules, functors, exceptions, arrays, char arithmetic,
 record patterns, two-or-more type params on variants, named variant payload
 fields, type aliases, class inheritance beyond interfaces, `open`,
 references, `unit` inside composite types). The TS backend accepts exactly

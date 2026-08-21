@@ -1,6 +1,7 @@
 (* Loops and mutation: a mutable local driven by `while` (including a
    statement-bearing condition, which re-evaluates on every iteration),
-   a counting `for`, and a `for ... in` over a list. *)
+   counting `for` loops in both directions, and a `for ... in` over a
+   list. *)
 
 let main () : unit =
   (* while: the condition re-evaluates each iteration *)
@@ -15,6 +16,11 @@ let main () : unit =
     acc <- acc + k
   done;
   print_endline (string_of_int acc);
+  (* for-range downward *)
+  for k = 5 downto 1 do
+    print_int k
+  done;
+  print_endline "";
   (* for-in over a list *)
   for x in [10; 20; 30] do
     print_int x

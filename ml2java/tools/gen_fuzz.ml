@@ -24,7 +24,7 @@
      - statement-bearing operands in `&&`, `^`, call args, list elements,
                                 record fields, tuple components, for-range
                                 bounds, while conditions, match scrutinee
-     - bounded loops            for-range / for-in / while
+     - bounded loops            for-range (to and downto) / for-in / while
      - builtins                 print_int/print_float/print_endline,
                                 string_of_*, List.length
 
@@ -110,6 +110,8 @@ let gen_program seed =
         "  print_endline (\"x\" ^ (c0 # bump 1; r0.fld_b));";
         "  for i = (c0 # bump 1; 0) to (c0 # bump 1; 2) do print_int (i + \
          r0.fld_a) done;";
+        "  for i = (c0 # bump 1; 3) downto (c0 # bump 1; 1) do print_int (i \
+         + r0.fld_a) done;";
         "  for x in (c0 # bump 1; [1; 2]) do print_int x done;";
         "  let mutable w = 0 in";
         "  while (c0 # bump 1; w < 2) do w <- w + 1 done;";

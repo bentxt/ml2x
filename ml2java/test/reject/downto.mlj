@@ -1,4 +1,0 @@
-let main () : unit =
-  for i = 3 downto 1 do
-    print_int i
-  done

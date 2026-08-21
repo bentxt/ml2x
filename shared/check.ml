@@ -1062,7 +1062,7 @@ let rec check_expr st env cls (e : expr) : expr * typ =
       let b', bt = check_expr st env' cls b in
       unify_at st b TUnit bt;
       ({ e with desc = EForIn (x, xs', b') }, memo TUnit)
-  | EForRange (x, lo, hi, b) ->
+  | EForRange (x, up, lo, hi, b) ->
       let lo', lt = check_expr st env cls lo in
       unify_at st lo lt TInt;
       let hi', ht = check_expr st env cls hi in
@@ -1070,7 +1070,7 @@ let rec check_expr st env cls (e : expr) : expr * typ =
       let env' = (x, { btyp = TInt; bmut = false }) :: env in
       let b', bt = check_expr st env' cls b in
       unify_at st b TUnit bt;
-      ({ e with desc = EForRange (x, lo', hi', b') }, memo TUnit)
+      ({ e with desc = EForRange (x, up, lo', hi', b') }, memo TUnit)
   | EBin (op, l, r) ->
       let l', lt = check_expr st env cls l in
       let r', rt = check_expr st env cls r in

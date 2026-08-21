@@ -48,7 +48,8 @@ literals, `x`, `(a, b)`, `[a; b]`, `x :: xs`, `{ x = e }`, `r.x`,
 `new c a`, `match e with | p when g -> rhs | ...`, `if a then b else c`,
 `let x = a in b`, `let mutable x = a in b`, `let (a, b) = e in b`,
 `a; b`, `while c do body done`, `for x in xs do body done`,
-`for i = lo to hi do body done`, `-x`, `not x`, `(e : t)`.
+`for i = lo to hi do body done`, `for i = lo downto hi do body done`,
+`-x`, `not x`, `(e : t)`.
 
 Operators: `+ - * / %` (int), `+. -. *. /.` (float), `= <> < <= > >=`,
 `&& ||`, `^` (string concat). Precedence: OCaml standard for these.
@@ -126,7 +127,7 @@ List.length    xs       -> xs.size()
 partial application, functions as values / `fun x -> e`, modules, functors,
 exceptions (`raise`, `try`), arrays, float-less `+.`-free mixes requiring
 promotion (int+float is an error, not auto-coerce, except literals? no: error),
-char arithmetic, `downto`, record patterns, two-or-more type params on
+char arithmetic, record patterns, two-or-more type params on
 variants (records allow any), named variant payload fields, type aliases,
 class inheritance (`inherit` only takes class type names = interfaces),
 `open`, references (`ref`, `:=`, `!`), a named parameter of type `unit`

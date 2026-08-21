@@ -72,7 +72,8 @@ and expr_desc =
   | ESeq of expr * expr                       (* e1; e2 *)
   | EWhile of expr * expr                     (* while e1 do e2 done *)
   | EForIn of string * expr * expr            (* for x in xs do body done *)
-  | EForRange of string * expr * expr * expr  (* for i = a to b do body done *)
+  | EForRange of string * bool * expr * expr * expr
+      (* for i = a to b do body done (true) / for i = a downto b (false) *)
   | EBin of binop * expr * expr
   | EUnary of unop * expr
   | ETyped of expr * typ                      (* (e : t) *)

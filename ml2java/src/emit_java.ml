@@ -1108,15 +1108,16 @@ and stmt_of st (e : expr) : unit =
       with_indent st (fun () -> stmt_of st body);
       pop_bind st;
       line st "}"
-  | EForRange (x, lo, hi, b) ->
+  | EForRange (x, up, lo, hi, b) ->
       let jx = fresh_binder st x in
       (* OCaml evaluates the bounds exactly ONCE; Java re-evaluates the for
          condition each iteration, so impure bounds are pinned into temps *)
       let los = pin st lo in
       let his = pin st hi in
+      let (cmp, step) = if up then (" <= ", "++") else (" >= ", "--") in
       line st
-        ("for (long " ^ jx ^ " = " ^ los ^ "; " ^ jx ^ " <= " ^ his ^ "; " ^ jx
-       ^ "++) {");
+        ("for (long " ^ jx ^ " = " ^ los ^ "; " ^ jx ^ cmp ^ his ^ "; " ^ jx
+       ^ step ^ ") {");
       push_bind st x jx;
       with_indent st (fun () -> stmt_of st b);
       pop_bind st;

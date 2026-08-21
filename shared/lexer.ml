@@ -7,7 +7,7 @@
    + - * / (the AST has one binop set; the checker decides int vs float
    from operand types). `mod` and `downto` are NOT keywords per SPEC:
    `%` is Mod, and `downto` surfaces as a plain identifier (the parser
-   rejects it in for-ranges with a clean message).
+   recognizes it in for-ranges after `=`).
 *)
 
 type t =
